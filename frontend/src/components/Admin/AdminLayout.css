@@ -1,0 +1,44 @@
+/* ============================================
+   Admin Layout — Contenu seul (menu admin dans sidebar principale)
+   ============================================ */
+
+.admin-layout {
+  display: block;
+  min-height: 100%;
+  width: 100%;
+  margin: -18px -24px -24px -24px;
+  --admin-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-main {
+  min-height: calc(100vh - var(--navbar-height));
+  min-width: 0;
+  padding: 24px 28px 32px;
+  background: var(--bg);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  overflow-y: auto;
+  animation: adminMainFadeIn 0.4s var(--admin-ease-out) forwards;
+}
+
+@keyframes adminMainFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-layout {
+    margin: 0;
+  }
+
+  .admin-main {
+    min-height: 0;
+    padding: 20px 16px;
+  }
+}

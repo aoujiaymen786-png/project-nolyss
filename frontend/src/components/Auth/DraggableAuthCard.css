@@ -1,0 +1,56 @@
+/* Carte d'authentification déplaçable et animée */
+.draggable-auth-card {
+  position: relative;
+  cursor: default;
+  will-change: transform;
+  padding-top: 28px; /* Espace pour la poignée de drag */
+}
+
+.draggable-auth-card-wrapper {
+  will-change: transform;
+}
+
+.draggable-auth-card-handle {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  cursor: grab;
+  z-index: 10;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.draggable-auth-card-handle:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.draggable-auth-card-handle:active {
+  cursor: grabbing;
+}
+
+.draggable-auth-card-grip {
+  display: block;
+  color: rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.draggable-auth-card-handle:hover .draggable-auth-card-grip {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* Animation flottante quand la carte est au repos */
+@keyframes cardFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}

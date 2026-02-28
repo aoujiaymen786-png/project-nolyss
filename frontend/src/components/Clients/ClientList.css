@@ -1,0 +1,128 @@
+.client-list-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.client-list-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.client-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.75rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.client-list-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.client-list-header .btn-primary {
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.client-list-header .btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(232, 93, 4, 0.3);
+}
+
+.client-list-table-wrap {
+  background: var(--surface);
+  border-radius: var(--radius);
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: var(--shadow);
+  overflow-x: auto;
+}
+
+.client-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.client-list-table th,
+.client-list-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(122, 122, 122, 0.15);
+}
+
+.client-list-table th {
+  font-weight: 600;
+  color: #123c4f;
+  background: rgba(223, 48, 0, 0.06);
+}
+
+.client-list-table tbody tr:hover {
+  background: rgba(223, 48, 0, 0.03);
+}
+
+.client-name-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.client-name-link:hover {
+  text-decoration: underline;
+}
+
+.tags-inline {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #7A7A7A);
+}
+
+.actions-cell {
+  white-space: nowrap;
+}
+
+.actions-cell a {
+  margin-right: 0.75rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.actions-cell a:hover {
+  text-decoration: underline;
+}
+
+.actions-cell .btn-delete {
+  background: none;
+  border: none;
+  color: #dc2626;
+  cursor: pointer;
+  font-size: 0.9rem;
+  padding: 0;
+}
+
+.actions-cell .btn-delete:hover {
+  text-decoration: underline;
+}
+
+.empty-row {
+  text-align: center;
+  color: var(--text-secondary, #7A7A7A);
+  padding: 2rem;
+}

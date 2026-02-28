@@ -1,0 +1,154 @@
+.project-wizard {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.project-wizard-header {
+  margin-bottom: 1.5rem;
+}
+
+.project-wizard-header h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.5rem;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.back-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.wizard-steps {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.wizard-step {
+  flex: 1;
+  padding: 0.5rem;
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #7A7A7A);
+  background: rgba(122, 122, 122, 0.1);
+  border-radius: 8px;
+}
+
+.wizard-step.active {
+  background: rgba(223, 48, 0, 0.15);
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.wizard-step.done {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.wizard-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.wizard-form {
+  background: var(--surface, #fff);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(18, 60, 79, 0.08);
+  box-shadow: 0 1px 3px rgba(11, 11, 11, 0.06);
+}
+
+.wizard-section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 1rem 0;
+  color: var(--primary);
+}
+
+.wizard-section .form-row {
+  margin-bottom: 1rem;
+}
+
+.wizard-section .form-row.two-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.wizard-section .form-group label {
+  display: block;
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+}
+
+.wizard-section .form-group input,
+.wizard-section .form-group select,
+.wizard-section .form-group textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(122, 122, 122, 0.3);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.wizard-section .form-group textarea {
+  resize: vertical;
+}
+
+.wizard-section .form-group .team-select {
+  min-height: 100px;
+}
+
+.wizard-section .form-group .hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #7A7A7A);
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.wizard-section .form-group .error {
+  font-size: 0.8rem;
+  color: #dc2626;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.wizard-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(122, 122, 122, 0.2);
+}
+
+.wizard-actions .btn-secondary {
+  background: #e2e8f0;
+  color: #334155;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  display: inline-block;
+}
+
+.wizard-actions .btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 600px) {
+  .wizard-section .form-row.two-cols {
+    grid-template-columns: 1fr;
+  }
+}

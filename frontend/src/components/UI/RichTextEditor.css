@@ -1,0 +1,58 @@
+/* RichTextEditor — Éditeur WYSIWYG */
+
+.rich-text-editor {
+  --editor-min-height: 180px;
+}
+
+.rich-text-editor .quill {
+  background: var(--surface, #fff);
+  border-radius: var(--radius, 10px);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.rich-text-editor .ql-toolbar {
+  background: rgba(0, 0, 0, 0.02);
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  padding: 8px 12px;
+}
+
+.rich-text-editor .ql-toolbar .ql-stroke {
+  stroke: rgba(0, 0, 0, 0.2);
+}
+
+.rich-text-editor .ql-toolbar .ql-fill {
+  fill: rgba(0, 0, 0, 0.4);
+}
+
+.rich-text-editor .ql-toolbar button:hover .ql-stroke,
+.rich-text-editor .ql-toolbar .ql-picker-label:hover .ql-stroke {
+  stroke: var(--primary);
+}
+
+.rich-text-editor .ql-toolbar button:hover .ql-fill,
+.rich-text-editor .ql-toolbar .ql-picker-label:hover .ql-fill {
+  fill: var(--primary);
+}
+
+.rich-text-editor .ql-toolbar .ql-picker-label.ql-active .ql-stroke {
+  stroke: var(--primary);
+}
+
+.rich-text-editor .ql-container {
+  border: none;
+  font-family: inherit;
+}
+
+.rich-text-editor .ql-editor {
+  min-height: var(--editor-min-height);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.rich-text-editor .ql-editor.ql-blank::before {
+  color: var(--text-secondary);
+  font-style: normal;
+}

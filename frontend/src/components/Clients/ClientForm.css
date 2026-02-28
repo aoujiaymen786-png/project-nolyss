@@ -1,0 +1,228 @@
+.client-form-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.client-form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.client-form-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--primary);
+}
+
+.back-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.back-link:hover {
+  text-decoration: underline;
+}
+
+.client-form-error {
+  background: #fef2f2;
+  color: #dc2626;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.client-form {
+  background: var(--surface, #fff);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid rgba(18, 60, 79, 0.08);
+  box-shadow: 0 1px 3px rgba(11, 11, 11, 0.06);
+}
+
+.client-form .form-section {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(122, 122, 122, 0.2);
+}
+
+.client-form .form-section:last-of-type {
+  border-bottom: none;
+}
+
+.client-form .form-section h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--primary);
+}
+
+.client-form .form-section-desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #64748b);
+  margin: 0 0 1rem 0;
+}
+
+.client-form .account-exists {
+  padding: 1rem;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+
+.client-form .checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.client-form .form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.client-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.client-form .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.client-form .form-group label {
+  font-weight: 500;
+  margin-bottom: 0.35rem;
+  font-size: 0.9rem;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.client-form .form-group input,
+.client-form .form-group textarea {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(122, 122, 122, 0.3);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.client-form .form-group input:focus,
+.client-form .form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.client-form .form-group .error {
+  font-size: 0.8rem;
+  color: #dc2626;
+  margin-top: 0.25rem;
+}
+
+.client-form .contact-block {
+  background: rgba(122, 122, 122, 0.06);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.client-form .checkbox-group {
+  justify-content: flex-end;
+}
+
+.client-form .checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.client-form .btn-secondary {
+  background: #e2e8f0;
+  color: #334155;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 0.75rem;
+  text-decoration: none;
+  display: inline-block;
+}
+
+.client-form .btn-secondary:hover {
+  background: #cbd5e1;
+}
+
+.client-form .btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.client-form .btn-primary:hover {
+  opacity: 0.95;
+}
+
+.client-form .tags-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.client-form .tag-input {
+  flex: 1;
+  max-width: 280px;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(122, 122, 122, 0.3);
+  border-radius: 8px;
+}
+
+.client-form .tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.client-form .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(223, 48, 0, 0.12);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.client-form .tag button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 0.2rem;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: inherit;
+}
+
+.client-form .tag button:hover {
+  color: #0B0B0B;
+}
+
+.client-form .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(122, 122, 122, 0.2);
+}

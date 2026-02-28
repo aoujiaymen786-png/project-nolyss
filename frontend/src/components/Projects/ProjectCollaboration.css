@@ -1,0 +1,91 @@
+.project-collaboration {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.project-collaboration h3 {
+  font-size: 1rem;
+  margin: 0 0 0.75rem 0;
+  color: var(--primary, #123c4f);
+}
+
+.project-collaboration-team .collaboration-team-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.project-collaboration-team .team-member-name {
+  display: inline-block;
+  padding: 0.35rem 0.75rem;
+  background: rgba(18, 60, 79, 0.08);
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.project-collaboration-comments .collaboration-comment-form {
+  margin-bottom: 1rem;
+}
+
+.project-collaboration-comments .collaboration-comment-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid rgba(122, 122, 122, 0.3);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 0.5rem;
+}
+
+.project-collaboration-comments .collaboration-comment-input:focus {
+  outline: none;
+  border-color: var(--primary, #123c4f);
+}
+
+.project-collaboration-comments .collaboration-comments-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.project-collaboration-comments .collaboration-comment-item {
+  padding: 0.75rem;
+  background: rgba(18, 60, 79, 0.04);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid var(--primary, #123c4f);
+}
+
+.project-collaboration-comments .collaboration-comment-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.project-collaboration-comments .collaboration-comment-author {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.project-collaboration-comments .collaboration-comment-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #7A7A7A);
+}
+
+.project-collaboration-comments .collaboration-comment-text {
+  font-size: 0.95rem;
+  color: var(--text-primary, #0B0B0B);
+  white-space: pre-wrap;
+}
+
+.project-collaboration .muted {
+  color: var(--text-secondary, #7A7A7A);
+  font-size: 0.9rem;
+}

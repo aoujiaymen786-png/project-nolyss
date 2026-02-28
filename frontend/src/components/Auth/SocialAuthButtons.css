@@ -1,0 +1,60 @@
+.social-auth {
+  margin-top: 1.25rem;
+  width: 100%;
+}
+
+.social-auth-divider {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.social-auth-divider::before,
+.social-auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.social-auth-divider span {
+  padding: 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.social-auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.social-auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s, border-color 0.2s, transform 0.15s;
+}
+
+.social-auth-btn:hover {
+  background: var(--surface-hover, rgba(0, 0, 0, 0.03));
+  border-color: rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
+}
+
+.social-auth-btn svg {
+  flex-shrink: 0;
+}
+
+.social-google:hover { border-color: #4285F4; }
+.social-linkedin:hover { border-color: #0A66C2; }
+.social-yahoo:hover { border-color: #6001D2; }

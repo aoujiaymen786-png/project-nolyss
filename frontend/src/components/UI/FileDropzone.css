@@ -1,0 +1,46 @@
+.ui-filedropzone {
+  border: 2px dashed rgba(100, 116, 139, 0.35);
+  border-radius: var(--radius);
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+  background: var(--primary-light);
+  color: var(--text-secondary);
+}
+
+.ui-filedropzone:hover,
+.ui-filedropzone--active {
+  border-color: var(--primary);
+  background: var(--primary-light);
+  color: var(--text-primary);
+}
+
+.ui-filedropzone:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.ui-filedropzone-input {
+  position: absolute;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ui-filedropzone-text {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.ui-filedropzone-text strong {
+  color: var(--primary);
+}
+
+.ui-filedropzone-error {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--danger, #ef4444);
+}

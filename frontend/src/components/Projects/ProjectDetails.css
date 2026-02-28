@@ -1,0 +1,190 @@
+.project-detail-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.5rem 0;
+}
+
+.project-detail-loading {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary, #7A7A7A);
+}
+
+.project-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.project-detail-header .back-link {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.project-detail-header h1 {
+  margin: 0 0 0.35rem 0;
+  font-size: 1.5rem;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.project-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #7A7A7A);
+}
+
+.project-detail-meta .status-badge {
+  padding: 0.25rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.project-detail-meta .status-prospecting { background: rgba(122, 122, 122, 0.2); }
+.project-detail-meta .status-quotation { background: rgba(223, 48, 0, 0.2); color: var(--primary); }
+.project-detail-meta .status-inProgress { background: rgba(59, 130, 246, 0.2); }
+.project-detail-meta .status-validation { background: rgba(245, 158, 11, 0.2); }
+.project-detail-meta .status-completed { background: rgba(16, 185, 129, 0.2); }
+.project-detail-meta .status-archived { background: rgba(107, 114, 128, 0.2); }
+
+.project-type {
+  background: rgba(18, 60, 79, 0.1);
+  color: #123c4f;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.project-detail-actions .btn-primary {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.project-detail-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.summary-card {
+  background: var(--surface, #fff);
+  border: 1px solid rgba(18, 60, 79, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 1px 3px rgba(11, 11, 11, 0.06);
+}
+
+.summary-label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #7A7A7A);
+  margin-bottom: 0.35rem;
+}
+
+.summary-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.progress-bar-thin {
+  height: 6px;
+  background: rgba(122, 122, 122, 0.2);
+  border-radius: 3px;
+  margin-top: 0.5rem;
+  overflow: hidden;
+}
+
+.progress-fill-thin {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--primary-hover));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.project-detail-content {
+  background: var(--surface, #fff);
+  border-radius: 12px;
+  border: 1px solid rgba(18, 60, 79, 0.08);
+  padding: 1.25rem;
+  box-shadow: 0 1px 3px rgba(11, 11, 11, 0.06);
+}
+
+.project-detail-section {
+  margin-bottom: 1.25rem;
+}
+
+.project-detail-section h2 {
+  font-size: 1rem;
+  margin: 0 0 0.5rem 0;
+  color: var(--primary);
+}
+
+.project-detail-section p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.project-detail-section .documents-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.project-detail-section .documents-list li {
+  padding: 0.35rem 0;
+}
+
+.project-detail-section .documents-list a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.project-detail-tabs {
+  margin-top: 1.5rem;
+}
+
+.tabs-nav {
+  display: flex;
+  gap: 0.25rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(122, 122, 122, 0.2);
+}
+
+.tab-link {
+  padding: 0.5rem 1rem;
+  color: var(--text-secondary, #7A7A7A);
+  text-decoration: none;
+  font-size: 0.9rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.tab-link:hover {
+  color: var(--primary);
+}
+
+.tab-link.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 500;
+}
+
+.tabs-content {
+  min-height: 200px;
+}

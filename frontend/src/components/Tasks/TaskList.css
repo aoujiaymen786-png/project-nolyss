@@ -1,0 +1,114 @@
+.task-list-block {
+  margin-top: 0.5rem;
+}
+
+.task-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.task-list-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary, #0B0B0B);
+}
+
+.btn-add-task {
+  background: linear-gradient(135deg, var(--primary), var(--primary-hover));
+  color: #fff;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.task-list-empty {
+  color: var(--text-secondary, #7A7A7A);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.task-list-table-wrap {
+  overflow-x: auto;
+}
+
+.task-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.task-list-table th,
+.task-list-table td {
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(122, 122, 122, 0.15);
+}
+
+.task-list-table th {
+  font-weight: 600;
+  color: #123c4f;
+  background: rgba(223, 48, 0, 0.06);
+}
+
+.task-title-link {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.task-title-link:hover {
+  text-decoration: underline;
+}
+
+.task-checklist-hint {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #7A7A7A);
+  margin-left: 0.35rem;
+}
+
+.task-status {
+  display: inline-block;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.task-status.status-todo { background: rgba(122, 122, 122, 0.2); }
+.task-status.status-inProgress { background: rgba(223, 48, 0, 0.2); color: var(--primary); }
+.task-status.status-review { background: rgba(245, 158, 11, 0.2); }
+.task-status.status-done { background: rgba(16, 185, 129, 0.2); color: #059669; }
+
+.task-priority {
+  display: inline-block;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+.task-priority.priority-low { background: rgba(16, 185, 129, 0.15); }
+.task-priority.priority-medium { background: rgba(245, 158, 11, 0.15); }
+.task-priority.priority-high { background: rgba(239, 68, 68, 0.15); }
+
+.task-list-table td a {
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.task-list-table td .btn-link {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  color: var(--primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.task-list-table td .btn-link:hover {
+  text-decoration: underline;
+}
