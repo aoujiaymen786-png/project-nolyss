@@ -145,10 +145,23 @@ const InvoiceForm = () => {
 
   const handleSubmit = async (e, saveAs = 'draft') => {
     e.preventDefault();
+    const validLines = formData.lines.filter((l) => (l.description || '').trim());
+    if (validLines.length === 0) {
+      alert('Au moins une ligne avec une description est requise.');
+      return;
+    }
     setLoading(true);
     try {
-      const payload = { ...formData, status: saveAs };
+      const statusToSave = saveAs === 'preserve'
+        ? formData.status
+        : ['paid', 'partial'].includes(formData.status)
+          ? formData.status
+          : saveAs;
+      const payload = { ...formData, status: statusToSave };
       if (!id && formData.quote) payload.quoteId = formData.quote;
+      if (!payload.quote) delete payload.quote;
+      if (!payload.project) delete payload.project;
+      payload.lines = formData.lines;
       if (id) {
         await API.put(`/invoices/${id}`, payload);
       } else {
@@ -165,10 +178,11 @@ const InvoiceForm = () => {
   return (
     <div className="invoice-form-container">
       <h1>{id ? 'Éditer la Facture' : 'Nouvelle Facture'}</h1>
+      <p className="form-intro">La facture constate une prestation ou une vente et engage le client au paiement. Vous pouvez la créer manuellement, à partir d’un devis accepté ou d’un projet.</p>
 
-      <form onSubmit={(e) => handleSubmit(e, formData.status)}>
+      <form onSubmit={(e) => handleSubmit(e, 'preserve')}>
         <div className="form-section">
-          <h3>Informations de Base</h3>
+          <h3>Informations de la facture</h3>
           <div className="form-grid">
             {!id && (
               <>
@@ -204,12 +218,13 @@ const InvoiceForm = () => {
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Type de facture </label>
+                  <label>Type de document</label>
                   <select name="type" value={formData.type} onChange={handleChange}>
                     <option value="invoice">Facture</option>
                     <option value="down_payment">Acompte</option>
                     <option value="credit_note">Avoir / Note de crédit</option>
                   </select>
+                  <span className="form-hint">Facture, acompte ou avoir — les devis sont gérés séparément.</span>
                 </div>
               </>
             )}
@@ -238,13 +253,15 @@ const InvoiceForm = () => {
                 <option value="partial">Partiellement payée</option>
                 <option value="paid">Payée</option>
                 <option value="overdue">En retard</option>
+                <option value="cancelled">Annulée</option>
               </select>
             </div>
           </div>
         </div>
 
         <div className="form-section">
-          <h3>Lignes</h3>
+          <h3>Lignes de facture</h3>
+          <div className="items-table-wrap">
           <div className="items-table">
             <div className="items-header">
               <div>Description</div>
@@ -313,6 +330,7 @@ const InvoiceForm = () => {
               );
             })}
           </div>
+          </div>
           <button type="button" onClick={addLine} className="btn btn-secondary">+ Ajouter une ligne</button>
         </div>
 
@@ -345,11 +363,20 @@ const InvoiceForm = () => {
         </div>
 
         <div className="form-actions">
+          <button type="submit" disabled={loading} className="btn btn-secondary">
+            Enregistrer
+          </button>
           <button type="button" onClick={(e) => handleSubmit(e, 'draft')} disabled={loading} className="btn btn-secondary">
             Enregistrer en Brouillon
           </button>
-          <button type="button" onClick={(e) => handleSubmit(e, 'sent')} disabled={loading} className="btn btn-primary">
-            Envoyer au Client
+          <button
+            type="button"
+            onClick={(e) => handleSubmit(e, 'sent')}
+            disabled={loading || ['paid', 'partial'].includes(formData.status)}
+            className="btn btn-primary"
+            title={['paid', 'partial'].includes(formData.status) ? 'Utilisez Enregistrer pour une facture déjà payée' : undefined}
+          >
+            Envoyer la facture au client
           </button>
           <button type="button" onClick={() => navigate(-1)} className="btn btn-outline">Annuler</button>
         </div>

@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeProjectStatusIndex, setActiveProjectStatusIndex] = useState(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -40,6 +41,21 @@ const AdminDashboard = () => {
   if (!stats) return <div className="dashboard-error">Erreur lors du chargement</div>;
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(255, 145, 37)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)', 'rgb(114, 224, 232)'];
+
+  const renderChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    return (
+      <div className="chart-tooltip">
+        {label && <div className="chart-tooltip-label">{label}</div>}
+        {payload.map((entry, index) => (
+          <div key={index} className="chart-tooltip-item">
+            <span className="chart-tooltip-name">{entry.name}</span>
+            <span className="chart-tooltip-value">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="dashboard-container">
@@ -94,22 +110,35 @@ const AdminDashboard = () => {
           <div className="chart-card">
             <h3>Statut des Projets</h3>
             {stats.projects && stats.projects.byStatus && stats.projects.byStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={340}>
                 <PieChart>
+                  <defs>
+                    <linearGradient id="adminPieGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="50%" stopColor="#ef4444" />
+                      <stop offset="100%" stopColor="#7c3aed" />
+                    </linearGradient>
+                  </defs>
                   <Pie
                     data={stats.projects.byStatus}
                     dataKey="count"
                     nameKey="_id"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    innerRadius={55}
+                    outerRadius={115}
+                    paddingAngle={2}
                     label
+                    isAnimationActive
+                    animationDuration={800}
+                    activeIndex={activeProjectStatusIndex}
+                    onMouseEnter={(_, index) => setActiveProjectStatusIndex(index)}
                   >
                     {stats.projects.byStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill="url(#adminPieGradient)" />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={renderChartTooltip} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -122,12 +151,22 @@ const AdminDashboard = () => {
             <h3>Statut des Tâches</h3>
             {stats.tasks && stats.tasks.byStatus && stats.tasks.byStatus.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.tasks.byStatus}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={stats.tasks.byStatus} barCategoryGap={28} barGap={6}>
+                  <defs>
+                    <linearGradient id="adminBarStatus" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#ef4444" />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="_id" />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="rgb(223, 48, 0)" />
+                  <Tooltip content={renderChartTooltip} />
+                  <Bar
+                    dataKey="count"
+                    fill="url(#adminBarStatus)"
+                    radius={[10, 10, 0, 0]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}
@@ -139,12 +178,22 @@ const AdminDashboard = () => {
             <h3>Priorité des Tâches</h3>
             {stats.tasks && stats.tasks.byPriority && stats.tasks.byPriority.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.tasks.byPriority}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={stats.tasks.byPriority} barCategoryGap={28} barGap={6}>
+                  <defs>
+                    <linearGradient id="adminBarPriority" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" />
+                      <stop offset="100%" stopColor="#16a34a" />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="_id" />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="rgb(255, 145, 37)" />
+                  <Tooltip content={renderChartTooltip} />
+                  <Bar
+                    dataKey="count"
+                    fill="url(#adminBarPriority)"
+                    radius={[10, 10, 0, 0]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}
@@ -156,12 +205,22 @@ const AdminDashboard = () => {
             <h3>Projets par Responsable</h3>
             {stats.projects && stats.projects.byManager && stats.projects.byManager.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.projects.byManager}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={stats.projects.byManager} barCategoryGap={32} barGap={8}>
+                  <defs>
+                    <linearGradient id="adminBarManager" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0ea5e9" />
+                      <stop offset="100%" stopColor="#0369a1" />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="manager" angle={-45} textAnchor="end" height={100} />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="#123c4f" />
+                  <Tooltip content={renderChartTooltip} />
+                  <Bar
+                    dataKey="count"
+                    fill="url(#adminBarManager)"
+                    radius={[10, 10, 0, 0]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}

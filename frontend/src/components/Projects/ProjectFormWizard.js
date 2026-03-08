@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import { useFormik } from 'formik';
 import * as Yup from 'yup';
 import API from '../../utils/api';
 import { useNavigate, useParams, Link } from 'react-router-dom';
+import { AuthContext } from '../../contexts/AuthContext';
 import './ProjectFormWizard.css';
 
 const STATUS_OPTIONS = [
@@ -25,7 +26,10 @@ const PROJECT_TYPES = ['Site web', 'Application', 'Conseil', 'Formation', 'Maint
 const ProjectFormWizard = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [step, setStep] = useState(1);
+  const stepRef = useRef(1);
+  const [canSubmit, setCanSubmit] = useState(false);
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
   const isEdit = !!id;
@@ -44,7 +48,7 @@ const ProjectFormWizard = () => {
       estimatedHours: '',
       description: '',
       objectives: '',
-      manager: '',
+      manager: user?.role === 'projectManager' ? (user?._id || '') : '',
       team: [],
     },
     validationSchema: Yup.object({
@@ -60,10 +64,11 @@ const ProjectFormWizard = () => {
         else payload.estimatedHours = Number(payload.estimatedHours);
         if (id) {
           await API.put(`/projects/${id}`, payload);
+          navigate('/projects');
         } else {
-          await API.post('/projects', payload);
+          const { data: created } = await API.post('/projects', payload);
+          navigate(`/projects/${created._id}/kanban`, { state: { message: 'Projet créé. Une tâche de lancement a été ajoutée. Vous pouvez en créer d\'autres.' } });
         }
-        navigate('/projects');
       } catch (err) {
         formik.setStatus(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Erreur');
       }
@@ -111,8 +116,25 @@ const ProjectFormWizard = () => {
       formik.setTouched({ name: true, client: true });
       return;
     }
-    setStep((s) => Math.min(s + 1, 3));
+    setStep((s) => {
+      const next = Math.min(s + 1, 3);
+      stepRef.current = next;
+      return next;
+    });
   };
+
+  useEffect(() => {
+    stepRef.current = step;
+  }, [step]);
+
+  useEffect(() => {
+    if (step === 3) {
+      const t = setTimeout(() => setCanSubmit(true), 400);
+      return () => clearTimeout(t);
+    } else {
+      setCanSubmit(false);
+    }
+  }, [step]);
 
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
@@ -133,7 +155,17 @@ const ProjectFormWizard = () => {
 
       {formik.status && <div className="wizard-error">{formik.status}</div>}
 
-      <form onSubmit={formik.handleSubmit} className="wizard-form">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (stepRef.current < 3) {
+            nextStep();
+          } else {
+            formik.handleSubmit(e);
+          }
+        }}
+        className="wizard-form"
+      >
         {step === 1 && (
           <section className="wizard-section">
             <h2>Informations générales</h2>
@@ -289,7 +321,7 @@ const ProjectFormWizard = () => {
           {step < 3 ? (
             <button type="button" className="btn-primary" onClick={nextStep}>Suivant</button>
           ) : (
-            <button type="submit" className="btn-primary">Enregistrer</button>
+            <button type="submit" className="btn-primary" disabled={!canSubmit}>Enregistrer</button>
           )}
         </div>
       </form>

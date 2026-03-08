@@ -370,6 +370,33 @@ const getCoordinatorDashboard = async (req, res) => {
       count: projects.filter((p) => p.status === s).length,
     }));
 
+    const projectsOverview = projects.map((p) => {
+      const stats = projectTaskStats[p._id.toString()] || { total: 0, done: 0 };
+      const progress = stats.total ? Math.round((stats.done / stats.total) * 100) : 0;
+      return {
+        _id: p._id,
+        name: p.name,
+        client: p.client?.name,
+        manager: p.manager?.name,
+        status: p.status,
+        deadline: p.deadline,
+        progress,
+        totalTasks: stats.total,
+        doneTasks: stats.done,
+        estimatedHours: tasks.filter((t) => (t.project?._id || t.project)?.toString() === p._id.toString()).reduce((s, t) => s + (t.estimatedHours || 0), 0),
+        actualHours: tasks.filter((t) => (t.project?._id || t.project)?.toString() === p._id.toString()).reduce((s, t) => s + (t.actualHours || 0), 0),
+      };
+    });
+
+    const timeReport = tasks.map((t) => ({
+      projectId: t.project?._id || t.project,
+      project: t.project?.name,
+      task: t.title,
+      assignedTo: (t.assignedTo || []).map((a) => a.name).join(', '),
+      estimatedHours: t.estimatedHours || 0,
+      actualHours: t.actualHours || 0,
+    }));
+
     res.json({
       kpis: {
         totalActiveProjects: activeProjects.length,
@@ -382,6 +409,8 @@ const getCoordinatorDashboard = async (req, res) => {
       },
       projectsByStatus,
       criticalProjects,
+      projectsOverview,
+      timeReport,
       delayAlerts,
       resourceDistribution: resourceDistribution.sort((a, b) => b.openTasks - a.openTasks),
       upcomingDeadlines,
@@ -616,13 +645,25 @@ const getManagerStats = async (req, res) => {
 const getTeamMemberStats = async (req, res) => {
   try {
     const userId = req.user._id;
-    const memberProjectIds = await Project.find({ team: userId }).distinct('_id');
+    const mongoose = require('mongoose');
+    const [teamProjectIds, taskProjectIds] = await Promise.all([
+      Project.find({ team: userId }).distinct('_id'),
+      Task.find({ assignedTo: userId }).distinct('project'),
+    ]);
+    const idSet = new Set();
+    (teamProjectIds || []).forEach((id) => id && idSet.add(id.toString()));
+    (taskProjectIds || []).forEach((id) => id && id.toString().length === 24 && idSet.add(id.toString()));
+    const memberProjectIds = Array.from(idSet)
+      .filter((id) => id && id.length === 24)
+      .map((id) => new mongoose.Types.ObjectId(id));
+
+    const projectFilter = memberProjectIds.length ? { project: { $in: memberProjectIds } } : { _id: { $exists: false } };
 
     const now = new Date();
     const myTasksInProgress = await Task.find({
       assignedTo: userId,
       status: { $ne: 'done' },
-      project: { $in: memberProjectIds },
+      ...projectFilter,
     })
       .populate('project', 'name')
       .sort({ dueDate: 1 })
@@ -633,7 +674,7 @@ const getTeamMemberStats = async (req, res) => {
       assignedTo: userId,
       status: { $ne: 'done' },
       dueDate: { $lt: now },
-      project: { $in: memberProjectIds },
+      ...projectFilter,
     })
       .populate('project', 'name')
       .sort({ dueDate: 1 })
@@ -644,18 +685,20 @@ const getTeamMemberStats = async (req, res) => {
       assignedTo: userId,
       status: { $ne: 'done' },
       dueDate: { $gte: now, $lte: in7Days },
-      project: { $in: memberProjectIds },
+      ...projectFilter,
     })
       .populate('project', 'name')
       .sort({ dueDate: 1 })
       .limit(15)
       .lean();
 
-    const assignedProjects = await Project.find({ team: userId })
-      .populate('client', 'name')
-      .populate('manager', 'name')
-      .select('name status startDate endDate deadline')
-      .lean();
+    const assignedProjects = memberProjectIds.length
+      ? await Project.find({ _id: { $in: memberProjectIds } })
+          .populate('client', 'name')
+          .populate('manager', 'name')
+          .select('name status startDate endDate deadline')
+          .lean()
+      : [];
 
     const timeWorkedAgg = await Task.aggregate([
       { $match: { assignedTo: userId } },
@@ -665,7 +708,7 @@ const getTeamMemberStats = async (req, res) => {
 
     const timeHistory = await Task.find({
       assignedTo: userId,
-      project: { $in: memberProjectIds },
+      ...projectFilter,
       actualHours: { $gt: 0 },
     })
       .select('title actualHours updatedAt status project')
@@ -675,7 +718,7 @@ const getTeamMemberStats = async (req, res) => {
       .lean();
 
     const collaborationFeed = await Task.find(
-      { project: { $in: memberProjectIds }, 'comments.0': { $exists: true } },
+      { ...projectFilter, 'comments.0': { $exists: true } },
       { title: 1, comments: { $slice: -3 }, project: 1 }
     )
       .populate('project', 'name')
@@ -722,7 +765,8 @@ const getTeamMemberStats = async (req, res) => {
       notifications,
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error('getTeamMemberStats:', error);
+    res.status(500).json({ message: error.message || 'Erreur serveur' });
   }
 };
 

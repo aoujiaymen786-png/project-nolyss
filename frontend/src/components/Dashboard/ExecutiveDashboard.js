@@ -24,6 +24,7 @@ const ExecutiveDashboard = () => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [validating, setValidating] = useState(null);
+  const [activeFinancialSlice, setActiveFinancialSlice] = useState(null);
 
   const fetchDirector = async () => {
     try {
@@ -69,6 +70,23 @@ const ExecutiveDashboard = () => {
 
   const { kpis, financialSummary, projectsOverview, workloadByTeam, clientPortfolio, pendingValidations } = data;
 
+  const renderChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    return (
+      <div className="chart-tooltip">
+        {label && <div className="chart-tooltip-label">{label}</div>}
+        {payload.map((entry, index) => (
+          <div key={index} className="chart-tooltip-item">
+            <span className="chart-tooltip-name">{entry.name}</span>
+            <span className="chart-tooltip-value">
+              {typeof entry.value === 'number' ? formatCurrency(entry.value) : entry.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const escapeCsv = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const downloadCsv = (filename, headers, rows) => {
     const csv = [headers.map(escapeCsv).join(','), ...rows.map((r) => r.map(escapeCsv).join(','))].join('\n');
@@ -91,6 +109,16 @@ const ExecutiveDashboard = () => {
       (p.actualBudget != null && p.estimatedBudget != null) ? (p.actualBudget - p.estimatedBudget) : '',
     ]);
     downloadCsv('rapport-directeur-projets.csv', headers, rows);
+  };
+  const exportWorkloadCsv = () => {
+    const headers = ['Membre', 'Nombre de tâches', 'Heures estimées', 'Heures réalisées'];
+    const rows = (workloadByTeam || []).map((w) => [
+      w.name || '-',
+      w.taskCount ?? 0,
+      w.estimatedHours ?? 0,
+      w.actualHours ?? 0,
+    ]);
+    downloadCsv('rapport-directeur-charge-travail.csv', headers, rows);
   };
   const exportDirectorPdf = () => {
     const win = window.open('', '_blank');
@@ -138,7 +166,8 @@ const ExecutiveDashboard = () => {
           <a href="#validations-required" className="btn-dashboard btn-dashboard-secondary">Valider (devis / factures)</a>
           <span className="manager-create-task-wrap">
             <span className="manager-create-task-label">Rapports :</span>
-            <button type="button" className="btn-dashboard btn-dashboard-secondary" onClick={exportDirectorCsv}>Export CSV</button>
+            <button type="button" className="btn-dashboard btn-dashboard-secondary" onClick={exportDirectorCsv}>Export CSV (projets)</button>
+            <button type="button" className="btn-dashboard btn-dashboard-secondary" onClick={exportWorkloadCsv}>Export CSV (charge de travail)</button>
             <button type="button" className="btn-dashboard btn-dashboard-secondary" onClick={exportDirectorPdf}>Export PDF</button>
           </span>
         </div>
@@ -201,22 +230,35 @@ const ExecutiveDashboard = () => {
           <div className="chart-card">
             <h3>Répartition CA par statut factures</h3>
             {financialSummary?.byStatus?.length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
+                  <defs>
+                    <linearGradient id="execPieGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" />
+                      <stop offset="50%" stopColor="#0ea5e9" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
                   <Pie
                     data={financialSummary.byStatus.map((s) => ({ name: s._id, value: s.total || 0 }))}
                     dataKey="value"
                     nameKey="name"
                     cx="50%"
                     cy="50%"
-                    outerRadius={70}
+                    innerRadius={60}
+                    outerRadius={110}
+                    paddingAngle={2}
                     label={({ name, value }) => `${name}: ${formatCurrency(value)}`}
+                    isAnimationActive
+                    animationDuration={900}
+                    activeIndex={activeFinancialSlice}
+                    onMouseEnter={(_, index) => setActiveFinancialSlice(index)}
                   >
                     {financialSummary.byStatus.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={i} fill="url(#execPieGradient)" />
                     ))}
                   </Pie>
-                  <Tooltip formatter={(v) => formatCurrency(v)} />
+                  <Tooltip content={renderChartTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             ) : (
@@ -230,14 +272,41 @@ const ExecutiveDashboard = () => {
             <h3>Charge de travail par équipe / membre</h3>
             {workloadByTeam?.length > 0 ? (
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={workloadByTeam} layout="vertical" margin={{ left: 80 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart
+                  data={workloadByTeam}
+                  layout="vertical"
+                  margin={{ left: 80 }}
+                  barCategoryGap={20}
+                  barGap={6}
+                >
+                  <defs>
+                    <linearGradient id="execBarEstimated" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="100%" stopColor="#0f766e" />
+                    </linearGradient>
+                    <linearGradient id="execBarActual" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#f97316" />
+                      <stop offset="100%" stopColor="#b91c1c" />
+                    </linearGradient>
+                  </defs>
                   <XAxis type="number" />
                   <YAxis type="category" dataKey="name" width={80} />
-                  <Tooltip />
+                  <Tooltip content={renderChartTooltip} />
                   <Legend />
-                  <Bar dataKey="estimatedHours" name="Heures estimées" fill="#123c4f" />
-                  <Bar dataKey="actualHours" name="Heures réalisées" fill="rgb(223, 48, 0)" />
+                  <Bar
+                    dataKey="estimatedHours"
+                    name="Heures estimées"
+                    fill="url(#execBarEstimated)"
+                    radius={[10, 10, 10, 10]}
+                    animationDuration={900}
+                  />
+                  <Bar
+                    dataKey="actualHours"
+                    name="Heures réalisées"
+                    fill="url(#execBarActual)"
+                    radius={[10, 10, 10, 10]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -252,12 +321,23 @@ const ExecutiveDashboard = () => {
         <div className="chart-card" style={{ marginBottom: '1.5rem' }}>
           <h3>Projets par statut</h3>
           <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={kpis.projectsByStatus}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <BarChart data={kpis.projectsByStatus} barCategoryGap={28} barGap={6}>
+              <defs>
+                <linearGradient id="execBarProjects" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4ade80" />
+                  <stop offset="100%" stopColor="#22c55e" />
+                </linearGradient>
+              </defs>
               <XAxis dataKey="_id" />
               <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="rgb(255, 145, 37)" name="Nombre" />
+              <Tooltip content={renderChartTooltip} />
+              <Bar
+                dataKey="count"
+                fill="url(#execBarProjects)"
+                name="Nombre"
+                radius={[10, 10, 0, 0]}
+                animationDuration={900}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>

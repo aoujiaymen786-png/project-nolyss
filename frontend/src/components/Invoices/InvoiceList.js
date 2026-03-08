@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Eye, Trash2 } from 'lucide-react';
+import { Eye, Trash2, Mail } from 'lucide-react';
 import { io } from 'socket.io-client';
 import API from '../../utils/api';
 import './Invoices.css';
@@ -11,6 +11,16 @@ const InvoiceList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [reminderLoadingId, setReminderLoadingId] = useState(null);
+
+  const invoiceStatusLabel = {
+    draft: 'Brouillon',
+    sent: 'Envoyée',
+    partial: 'Partiellement payée',
+    paid: 'Payée',
+    overdue: 'En retard',
+    cancelled: 'Annulée',
+  };
 
   useEffect(() => {
     fetchInvoices();
@@ -85,6 +95,25 @@ const InvoiceList = () => {
     }
   };
 
+  const canSendReminder = (inv) => {
+    if (!['sent', 'partial', 'overdue'].includes(inv.status)) return false;
+    const remaining = (inv.totalTTC || 0) - (inv.paidAmount || 0);
+    return remaining > 0.01;
+  };
+
+  const handleSendReminder = async (id) => {
+    try {
+      setReminderLoadingId(id);
+      await API.post(`/invoices/${id}/send-reminder`);
+      fetchInvoices();
+      alert('Relance envoyée au client.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Impossible d\'envoyer la relance.');
+    } finally {
+      setReminderLoadingId(null);
+    }
+  };
+
   if (loading) return <div className="invoices-loading">Chargement...</div>;
 
   return (
@@ -145,11 +174,22 @@ const InvoiceList = () => {
                 <td>{invoice.type === 'credit_note' ? 'Avoir' : invoice.type === 'down_payment' ? 'Acompte' : 'Facture'}</td>
                 <td className="amount">{invoice.totalTTC?.toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
                 <td>{invoice.paidAmount?.toLocaleString('fr-FR', { style: 'currency', currency: 'TND' }) || '-'}</td>
-                <td><span className={`status-${invoice.status}`}>{invoice.status}</span></td>
+                <td><span className={`status-${invoice.status}`}>{invoiceStatusLabel[invoice.status] ?? invoice.status}</span></td>
                 <td>{invoice.date ? new Date(invoice.date).toLocaleDateString('fr-FR') : '-'}</td>
                 <td>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('fr-FR') : '-'}</td>
                 <td className="actions">
                   <Link to={`/invoices/${invoice._id}/edit`} className="btn-icon" title="Voir/Éditer"><Eye size={16} /></Link>
+                  {canSendReminder(invoice) && (
+                    <button
+                      type="button"
+                      onClick={() => handleSendReminder(invoice._id)}
+                      disabled={reminderLoadingId === invoice._id}
+                      className="btn-icon"
+                      title="Envoyer une relance au client"
+                    >
+                      {reminderLoadingId === invoice._id ? '…' : <Mail size={16} />}
+                    </button>
+                  )}
                   {invoice.status === 'draft' && (
                     <button type="button" onClick={() => handleDelete(invoice._id)} className="btn-icon btn-danger" title="Supprimer"><Trash2 size={16} /></button>
                   )}

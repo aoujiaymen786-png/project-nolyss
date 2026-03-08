@@ -11,8 +11,11 @@ const ROLES = [
   { value: 'client', label: 'Client' },
 ];
 
+const ROLE_LABELS = { director: 'Directeur', coordinator: 'Coordinatrice', projectManager: 'Chef de projet', teamMember: 'Membre d\'équipe' };
+
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
+  const [pendingRegistrations, setPendingRegistrations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modal, setModal] = useState(null);
   const [form, setForm] = useState({ name: '', email: '', password: '', phone: '', role: 'teamMember', isActive: true });
@@ -29,9 +32,24 @@ const UserManagement = () => {
     }
   };
 
+  const fetchPendingRegistrations = async () => {
+    try {
+      const { data } = await API.get('/users/pending/registrations');
+      setPendingRegistrations(data || []);
+    } catch (err) {
+      setPendingRegistrations([]);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchPendingRegistrations();
   }, []);
+
+  const refreshAll = () => {
+    fetchUsers();
+    fetchPendingRegistrations();
+  };
 
   const openCreate = () => {
     setForm({ name: '', email: '', password: '', phone: '', role: 'teamMember', isActive: true });
@@ -72,7 +90,7 @@ const UserManagement = () => {
         await API.put(`/users/${form._id}`, payload);
       }
       setModal(null);
-      fetchUsers();
+      refreshAll();
     } catch (err) {
       setError(err.response?.data?.message || err.response?.data?.errors?.[0]?.msg || 'Erreur');
     }
@@ -82,7 +100,7 @@ const UserManagement = () => {
     if (!window.confirm('Supprimer cet utilisateur ?')) return;
     try {
       await API.delete(`/users/${id}`);
-      fetchUsers();
+      refreshAll();
     } catch (err) {
       alert(err.response?.data?.message || 'Erreur suppression');
     }
@@ -92,6 +110,25 @@ const UserManagement = () => {
     try {
       await API.patch(`/users/${userId}/role`, { role: newRole });
       fetchUsers();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur');
+    }
+  };
+
+  const handleApproveRegistration = async (userId) => {
+    try {
+      await API.post(`/users/${userId}/approve-registration`);
+      refreshAll();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Erreur');
+    }
+  };
+
+  const handleRejectRegistration = async (userId) => {
+    if (!window.confirm('Refuser cette demande d\'inscription ?')) return;
+    try {
+      await API.post(`/users/${userId}/reject-registration`);
+      refreshAll();
     } catch (err) {
       alert(err.response?.data?.message || 'Erreur');
     }
@@ -107,6 +144,39 @@ const UserManagement = () => {
       </div>
 
       {error && <div className="admin-error">{error}</div>}
+
+      {pendingRegistrations.length > 0 && (
+        <div className="admin-card admin-pending-section">
+          <h2 className="admin-section-title">Demandes d&apos;inscription en attente</h2>
+          <p className="admin-section-desc">Ces utilisateurs ont créé un compte et attendent votre validation pour pouvoir se connecter.</p>
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôle demandé</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pendingRegistrations.map((u) => (
+                <tr key={u._id}>
+                  <td>{u.name}</td>
+                  <td>{u.email}</td>
+                  <td>{ROLE_LABELS[u.role] || u.role}</td>
+                  <td>{u.createdAt ? new Date(u.createdAt).toLocaleString('fr-FR') : '-'}</td>
+                  <td>
+                    <button type="button" className="btn-sm btn-success" onClick={() => handleApproveRegistration(u._id)}>Accepter</button>
+                    {' '}
+                    <button type="button" className="btn-sm btn-danger" onClick={() => handleRejectRegistration(u._id)}>Refuser</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <div className="admin-card admin-table-wrap">
         <table className="admin-table">

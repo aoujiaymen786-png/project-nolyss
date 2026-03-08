@@ -20,6 +20,8 @@ const userSchema = mongoose.Schema(
     },
     client: { type: mongoose.Schema.Types.ObjectId, ref: 'Client' },
     isActive: { type: Boolean, default: true },
+    /** Statut de validation d'inscription (uniquement pour nouvelles inscriptions Directeur/Coordinatrice/Chef de projet/Membre d'équipe). null/undefined = compte existant ou non concerné. */
+    registrationStatus: { type: String, enum: ['pending', 'approved', 'rejected'] },
     profilePicture: { type: String },
     twoFactorEnabled: { type: Boolean, default: false },
     twoFactorSecret: { type: String },

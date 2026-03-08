@@ -30,6 +30,22 @@
   margin: 0;
 }
 
+.task-list-empty-state {
+  padding: 2rem;
+  text-align: center;
+  background: rgba(18, 60, 79, 0.04);
+  border-radius: 12px;
+  border: 1px dashed rgba(122, 122, 122, 0.25);
+}
+
+.task-list-empty-state .task-list-empty {
+  margin-bottom: 1rem;
+}
+
+.task-list-empty-cta {
+  display: inline-block;
+}
+
 .task-list-table-wrap {
   overflow-x: auto;
 }

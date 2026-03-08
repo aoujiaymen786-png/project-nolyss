@@ -144,7 +144,7 @@ const deleteClient = async (req, res) => {
     if (client.user) {
       await User.findByIdAndDelete(client.user);
     }
-    await client.remove();
+    await client.deleteOne();
     res.json({ message: 'Client supprimé' });
   } catch (error) {
     res.status(500).json({ message: error.message });

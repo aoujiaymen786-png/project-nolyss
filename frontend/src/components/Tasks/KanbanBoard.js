@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useContext } from 'react';
+import { useParams, useLocation, Link } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
 import API from '../../utils/api';
 import { AuthContext } from '../../contexts/AuthContext';
 import TaskDetailModal from './TaskDetailModal';
 import './KanbanBoard.css';
 
-const KanbanBoard = ({ projectId }) => {
+const KanbanBoard = ({ projectId: projectIdProp }) => {
+  const { projectId: projectIdParam } = useParams();
+  const location = useLocation();
+  const projectId = projectIdProp || projectIdParam;
   const { user } = useContext(AuthContext);
   const [tasks, setTasks] = useState({});
   const [allTasks, setAllTasks] = useState([]);
@@ -14,7 +18,7 @@ const KanbanBoard = ({ projectId }) => {
   const [projects, setProjects] = useState([]);
   const [selectedTaskId, setSelectedTaskId] = useState(null);
   const [priorityFilter, setPriorityFilter] = useState('');
-  const [assigneeFilter, setAssigneeFilter] = useState('all');
+  const [assigneeFilter, setAssigneeFilter] = useState(user?.role === 'teamMember' ? 'mine' : 'all');
   const [sprintFilter, setSprintFilter] = useState('all');
 
   const statuses = ['todo', 'inProgress', 'review', 'done'];
@@ -90,9 +94,10 @@ const KanbanBoard = ({ projectId }) => {
     return (allTasks || []).filter((task) => {
       if (priorityFilter && task.priority !== priorityFilter) return false;
       if (assigneeFilter === 'mine') {
+        const uid = (user?._id || user?.id)?.toString();
         const mine = Array.isArray(task.assignedTo)
-          ? task.assignedTo.some((a) => (a?._id || a).toString() === user?._id)
-          : (task.assignedTo?._id || task.assignedTo)?.toString() === user?._id;
+          ? task.assignedTo.some((a) => (a?._id || a)?.toString() === uid)
+          : (task.assignedTo?._id || task.assignedTo)?.toString() === uid;
         if (!mine) return false;
       }
       if (!isTaskInSprint(task)) return false;
@@ -140,11 +145,17 @@ const KanbanBoard = ({ projectId }) => {
 
   if (loading) return <div className="kanban-loading">Chargement...</div>;
 
+  const successMessage = location.state?.message;
   const totalTasks = filteredTasks().length;
   const overdueCount = filteredTasks().filter((t) => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length;
 
   return (
     <div className="kanban-container">
+      {successMessage && (
+        <div className="kanban-success-banner">
+          {successMessage}
+        </div>
+      )}
       <div className="kanban-header">
         <div>
           <h1>Tableau Kanban</h1>
@@ -172,6 +183,11 @@ const KanbanBoard = ({ projectId }) => {
           </select>
           <span className="task-count">Total: {totalTasks} tâches</span>
           <span className="task-count alert">Retards: {overdueCount}</span>
+          {projectId && (
+            <Link to={`/projects/${projectId}/tasks/new`} className="btn btn-primary kanban-add-task">
+              + Nouvelle tâche
+            </Link>
+          )}
         </div>
       </div>
 

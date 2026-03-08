@@ -23,8 +23,11 @@ app.use('/api/invoices', require('./routes/invoiceRoutes'));
 app.use('/api/dashboard', require('./routes/dashboardRoutes'));
 app.use('/api/upload', require('./routes/uploadRoutes'));
 app.use('/api/client-portal', require('./routes/clientPortalRoutes'));
+app.use('/api/paiements', require('./routes/paymentRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/claims', require('./routes/claimRoutes'));
+app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // Gestionnaire d'erreurs global (multer, cloudinary, etc.)
 app.use((err, req, res, next) => {
@@ -71,5 +74,10 @@ io.on('connection', (socket) => {
 
 app.set('io', io);
 
+const { startInvoiceReminderJob } = require('./jobs/invoiceReminderJob');
+
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+server.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  startInvoiceReminderJob();
+});

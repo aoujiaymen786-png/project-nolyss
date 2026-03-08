@@ -311,6 +311,33 @@
   border-color: rgba(220, 38, 38, 0.5);
 }
 
+.btn-sm.btn-success {
+  border-color: rgba(5, 150, 105, 0.4);
+  color: #059669;
+}
+
+.btn-sm.btn-success:hover {
+  background: rgba(5, 150, 105, 0.08);
+  border-color: rgba(5, 150, 105, 0.6);
+}
+
+.admin-pending-section {
+  margin-bottom: var(--admin-space-xl);
+}
+
+.admin-section-title {
+  margin: 0 0 var(--admin-space-sm);
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--text-primary, #0f172a);
+}
+
+.admin-section-desc {
+  margin: 0 0 var(--admin-space-lg);
+  font-size: 0.9rem;
+  color: var(--text-secondary, #64748b);
+}
+
 /* ----- Formulaires ----- */
 .admin-form-group {
   margin-bottom: var(--admin-space-lg);
@@ -439,19 +466,26 @@
   to { transform: rotate(360deg); }
 }
 
-/* ----- Modales ----- */
+/* ----- Modales (rendues en portail pour centrage viewport) ----- */
 .admin-modal-overlay {
   position: fixed;
-  inset: 0;
-  background: rgba(15, 23, 42, 0.4);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  min-height: 100vh;
+  width: 100%;
+  background: rgba(15, 23, 42, 0.45);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
-  padding: var(--admin-space-lg);
+  z-index: 10000;
+  padding: 1.5rem;
+  overflow-y: auto;
   animation: adminOverlayIn 0.25s var(--admin-ease) forwards;
+  box-sizing: border-box;
 }
 
 @keyframes adminOverlayIn {
@@ -465,10 +499,12 @@
   padding: var(--admin-space-2xl);
   max-width: 460px;
   width: 100%;
-  max-height: 90vh;
+  max-height: calc(100vh - 3rem);
   overflow-y: auto;
   box-shadow: var(--admin-shadow-lg);
   border: var(--admin-border);
+  margin: auto;
+  flex-shrink: 0;
   animation: adminModalIn 0.35s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 

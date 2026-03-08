@@ -9,15 +9,19 @@ const PRIORITY_LABELS = { low: 'Basse', medium: 'Moyenne', high: 'Haute' };
 
 const TaskList = ({ projectId }) => {
   const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [detailTaskId, setDetailTaskId] = useState(null);
 
   const fetchTasks = async () => {
     if (!projectId) return;
+    setLoading(true);
     try {
       const { data } = await API.get(`/tasks?project=${projectId}`);
       setTasks(data || []);
     } catch (e) {
       console.error(e);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,8 +35,13 @@ const TaskList = ({ projectId }) => {
         <h3>Tâches</h3>
         <Link to={`/projects/${projectId}/tasks/new`} className="btn-add-task">Nouvelle tâche</Link>
       </div>
-      {tasks.length === 0 ? (
-        <p className="task-list-empty">Aucune tâche. Créez une tâche pour commencer.</p>
+      {loading ? (
+        <p className="task-list-empty">Chargement des tâches...</p>
+      ) : tasks.length === 0 ? (
+        <div className="task-list-empty-state">
+          <p className="task-list-empty">Aucune tâche pour ce projet.</p>
+          <Link to={`/projects/${projectId}/tasks/new`} className="btn-add-task task-list-empty-cta">Créer une tâche</Link>
+        </div>
       ) : (
         <div className="task-list-table-wrap">
           <table className="task-list-table">

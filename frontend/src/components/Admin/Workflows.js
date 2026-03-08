@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import API from '../../utils/api';
 import './AdminCommon.css';
+import './Workflows.css';
 
 const ENTITY_TYPES = [
   { value: 'project', label: 'Projet' },
@@ -57,7 +59,7 @@ const Workflows = () => {
   const openEdit = (item) => {
     setForm({
       _id: item._id,
-      name: item.name,
+      name: item.name || '',
       description: item.description || '',
       entityType: item.entityType || 'project',
       trigger: item.trigger || 'on_create',
@@ -141,29 +143,39 @@ const Workflows = () => {
         )}
       </div>
 
-      {modal && (
-        <div className="admin-modal-overlay" onClick={() => setModal(null)}>
-          <div className="admin-modal" onClick={(e) => e.stopPropagation()}>
-            <h2>{modal === 'create' ? 'Nouveau workflow' : 'Modifier le workflow'}</h2>
+      {modal && createPortal(
+        <div className="admin-modal-overlay workflow-modal-overlay" onClick={() => setModal(null)} role="dialog" aria-modal="true">
+          <div className="admin-modal workflow-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="workflow-modal-header">
+              <h2>{modal === 'create' ? 'Nouveau workflow' : 'Modifier le workflow'}</h2>
+              <p className="admin-modal-subtitle">Définir quand le workflow s’exécute (entité et déclencheur). Les étapes (approbations, notifications) se configurent après enregistrement.</p>
+            </div>
             <form onSubmit={handleSubmit}>
               <div className="admin-form-group">
-                <label>Nom</label>
+                <label htmlFor="workflow-name">Nom <span className="required">*</span></label>
                 <input
+                  id="workflow-name"
+                  type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="ex: Validation des projets"
                   required
                 />
               </div>
               <div className="admin-form-group">
-                <label>Description</label>
+                <label htmlFor="workflow-description">Description</label>
                 <input
+                  id="workflow-description"
+                  type="text"
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  placeholder="Optionnel"
                 />
               </div>
               <div className="admin-form-group">
-                <label>Entité</label>
+                <label htmlFor="workflow-entity">Entité</label>
                 <select
+                  id="workflow-entity"
                   value={form.entityType}
                   onChange={(e) => setForm({ ...form, entityType: e.target.value })}
                 >
@@ -173,8 +185,9 @@ const Workflows = () => {
                 </select>
               </div>
               <div className="admin-form-group">
-                <label>Déclencheur</label>
+                <label htmlFor="workflow-trigger">Déclencheur</label>
                 <select
+                  id="workflow-trigger"
                   value={form.trigger}
                   onChange={(e) => setForm({ ...form, trigger: e.target.value })}
                 >
@@ -184,7 +197,7 @@ const Workflows = () => {
                 </select>
               </div>
               <div className="admin-form-group">
-                <label>
+                <label className="admin-checkbox-label">
                   <input
                     type="checkbox"
                     checked={form.isActive}
@@ -199,7 +212,8 @@ const Workflows = () => {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

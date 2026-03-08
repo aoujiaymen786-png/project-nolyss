@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import API from '../../utils/api';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
 import './Dashboard.css';
@@ -17,6 +17,7 @@ const CLIENT_WIDGET_LAYOUT = [
 const ClientDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeProjectSlice, setActiveProjectSlice] = useState(null);
 
   useEffect(() => {
     const fetchClientStats = async () => {
@@ -36,6 +37,21 @@ const ClientDashboard = () => {
   if (!stats) return <div className="dashboard-error">Erreur lors du chargement</div>;
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)'];
+
+  const renderChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    return (
+      <div className="chart-tooltip">
+        {label && <div className="chart-tooltip-label">{label}</div>}
+        {payload.map((entry, index) => (
+          <div key={index} className="chart-tooltip-item">
+            <span className="chart-tooltip-name">{entry.name}</span>
+            <span className="chart-tooltip-value">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="dashboard-container">
@@ -90,22 +106,35 @@ const ClientDashboard = () => {
           <div className="chart-card">
             <h3>Statut de Mes Projets</h3>
             {stats.projectsByStatus && stats.projectsByStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={340}>
                 <PieChart>
+                  <defs>
+                    <linearGradient id="clientPieGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#22c55e" />
+                      <stop offset="50%" stopColor="#0ea5e9" />
+                      <stop offset="100%" stopColor="#6366f1" />
+                    </linearGradient>
+                  </defs>
                   <Pie
                     data={stats.projectsByStatus}
                     dataKey="count"
                     nameKey="_id"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    innerRadius={65}
+                    outerRadius={115}
+                    paddingAngle={2}
                     label
+                    isAnimationActive
+                    animationDuration={900}
+                    activeIndex={activeProjectSlice}
+                    onMouseEnter={(_, index) => setActiveProjectSlice(index)}
                   >
                     {stats.projectsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill="url(#clientPieGradient)" />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={renderChartTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de projets</p>}
@@ -117,12 +146,22 @@ const ClientDashboard = () => {
             <h3>Statut des Factures</h3>
             {stats.invoicesByStatus && stats.invoicesByStatus.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.invoicesByStatus}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={stats.invoicesByStatus} barCategoryGap={26} barGap={8}>
+                  <defs>
+                    <linearGradient id="clientBarInvoices" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fb923c" />
+                      <stop offset="100%" stopColor="#b91c1c" />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="_id" />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="count" fill="rgb(223, 48, 0)" />
+                  <Tooltip content={renderChartTooltip} />
+                  <Bar
+                    dataKey="count"
+                    fill="url(#clientBarInvoices)"
+                    radius={[10, 10, 0, 0]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Aucune facture</p>}

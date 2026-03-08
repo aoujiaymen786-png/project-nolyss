@@ -36,6 +36,25 @@ const projectSchema = mongoose.Schema(
         url: String,
         uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
         uploadedAt: { type: Date, default: Date.now },
+        validated: { type: Boolean, default: false },
+        validatedAt: Date,
+        validatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      },
+    ],
+    milestones: [
+      {
+        name: { type: String, required: true },
+        dueDate: Date,
+        description: String,
+        completed: { type: Boolean, default: false },
+      },
+    ],
+    sprints: [
+      {
+        name: { type: String, required: true },
+        startDate: Date,
+        endDate: Date,
+        goal: String,
       },
     ],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },

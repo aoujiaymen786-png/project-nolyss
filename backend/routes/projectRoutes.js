@@ -7,6 +7,7 @@ const {
   deleteProject,
   getProjectProgress,
   addProjectComment,
+  validateProjectAttachment,
 } = require('../controllers/projectController');
 const { protect } = require('../middleware/authMiddleware');
 const { authorize } = require('../middleware/roleMiddleware');
@@ -20,6 +21,7 @@ router.route('/')
 
 router.get('/:id/progress', protect, getProjectProgress);
 router.post('/:id/comments', protect, addProjectComment);
+router.patch('/:id/attachments/:attachmentIndex/validate', protect, authorize('UPDATE_PROJECT'), validateProjectAttachment);
 
 router.route('/:id')
   .get(protect, getProjectById)

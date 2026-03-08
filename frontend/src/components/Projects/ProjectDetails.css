@@ -155,6 +155,75 @@
   text-decoration: none;
 }
 
+.document-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.badge-validated {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success, #059669);
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.btn-validate-doc {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  cursor: pointer;
+}
+
+.btn-validate-doc:hover {
+  background: rgba(223, 48, 0, 0.08);
+}
+
+.milestones-list, .sprints-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem 0;
+}
+
+.milestones-list li, .sprints-list li {
+  padding: 0.4rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.milestones-list li.milestone-done {
+  opacity: 0.8;
+  text-decoration: line-through;
+}
+
+.milestone-date { font-size: 0.85rem; color: var(--text-secondary); }
+.milestone-desc { font-size: 0.85rem; color: var(--text-secondary); font-style: italic; }
+.sprint-goal { font-size: 0.9rem; color: var(--text-secondary); }
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.inline-form input[type="text"],
+.inline-form input[type="date"] {
+  padding: 0.4rem 0.6rem;
+  border: 1px solid rgba(122, 122, 122, 0.3);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
 .project-detail-tabs {
   margin-top: 1.5rem;
 }

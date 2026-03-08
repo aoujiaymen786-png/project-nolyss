@@ -18,7 +18,8 @@ const PRIORITY_LABELS = { low: 'Basse', medium: 'Moyenne', high: 'Haute' };
 const ProjectList = () => {
   const { user } = useContext(AuthContext);
   const role = user?.role;
-  const canManageProjects = ['admin', 'director', 'coordinator', 'projectManager'].includes(role);
+  const canManageProjects = ['admin', 'coordinator', 'projectManager'].includes(role);
+  const isDirectorViewOnly = role === 'director';
   const [projects, setProjects] = useState([]);
   const [clients, setClients] = useState([]);
   const [users, setUsers] = useState([]);
@@ -65,7 +66,7 @@ const ProjectList = () => {
   }, [filters]);
 
   useEffect(() => {
-    if (!canManageProjects) return;
+    if (!canManageProjects && !isDirectorViewOnly) return;
     API.get('/clients')
       .then((r) => setClients(r.data))
       .catch((e) => {
@@ -137,7 +138,7 @@ const ProjectList = () => {
   return (
     <div className="project-list-page invoices-container">
       <div className="page-header project-list-header">
-        <h1>Projets</h1>
+        <h1>{isDirectorViewOnly ? 'Consulter les projets' : 'Projets'}</h1>
         {canManageProjects && <Link to="/projects/new" className="btn btn-primary">Nouveau projet</Link>}
       </div>
 
@@ -158,7 +159,7 @@ const ProjectList = () => {
               <option key={k} value={k}>{v}</option>
             ))}
           </select>
-          {canManageProjects && (
+          {(canManageProjects || isDirectorViewOnly) && (
             <select value={filters.client} onChange={(e) => updateFilter('client', e.target.value)}>
               <option value="">Tous les clients</option>
               {clients.map((c) => (
@@ -166,7 +167,7 @@ const ProjectList = () => {
               ))}
             </select>
           )}
-          {canManageProjects && (
+          {(canManageProjects || isDirectorViewOnly) && (
             <select value={filters.manager} onChange={(e) => updateFilter('manager', e.target.value)}>
               <option value="">Tous les responsables</option>
               {users.filter((u) => u.role === 'projectManager' || u.role === 'admin' || u.role === 'director').map((u) => (
@@ -240,8 +241,7 @@ const ProjectList = () => {
                     <td>{p.estimatedBudget != null ? `${p.estimatedBudget} TND` : '–'}</td>
                     <td className="actions-cell">
                       <Link to={`/projects/${p._id}`}>Voir</Link>
-                      {canManageProjects && <Link to={`/projects/edit/${p._id}`}>Modifier</Link>}
-                      {canManageProjects && <button type="button" className="btn-delete" onClick={() => handleDelete(p._id)}>Supprimer</button>}
+                      {canManageProjects && <><Link to={`/projects/edit/${p._id}`}>Modifier</Link><button type="button" className="btn-delete" onClick={() => handleDelete(p._id)}>Supprimer</button></>}
                     </td>
                   </tr>
                 ))

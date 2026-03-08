@@ -33,7 +33,7 @@ const ProjectCollaboration = ({ projectId, project, onProjectUpdate }) => {
 
   return (
     <div className="project-collaboration">
-      <div className="project-collaboration-team">
+      <div className="project-collaboration-team collaboration-section">
         <h3>Membres de l'équipe</h3>
         {project?.team?.length > 0 ? (
           <ul className="collaboration-team-list">
@@ -44,11 +44,13 @@ const ProjectCollaboration = ({ projectId, project, onProjectUpdate }) => {
             ))}
           </ul>
         ) : (
-          <p className="muted">Aucun membre dans l'équipe</p>
+          <div className="collaboration-empty-block">
+            <p className="muted">Aucun membre dans l'équipe. Modifiez le projet pour ajouter des membres.</p>
+          </div>
         )}
       </div>
 
-      <div className="project-collaboration-comments">
+      <div className="project-collaboration-comments collaboration-section">
         <h3>Commentaires ({comments.length})</h3>
         <form onSubmit={handleAddComment} className="collaboration-comment-form">
           <textarea
@@ -64,7 +66,7 @@ const ProjectCollaboration = ({ projectId, project, onProjectUpdate }) => {
         </form>
         <ul className="collaboration-comments-list">
           {comments.length === 0 ? (
-            <li className="muted">Aucun commentaire. Soyez le premier à commenter.</li>
+            <li className="collaboration-empty-block muted">Aucun commentaire. Soyez le premier à commenter ci-dessous.</li>
           ) : (
             [...comments]
               .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))

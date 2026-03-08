@@ -14,29 +14,22 @@ const {
   resetPassword,
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
-const rateLimit = require('express-rate-limit');
 const upload = require('../config/cloudinary');
 const { validateRegister, validateLogin, validateVerifyEmail, validateForgotPassword, validateResetPassword } = require('../middleware/validationMiddleware');
-
-const authLimiter = rateLimit({
-	windowMs: 15 * 60 * 1000,
-	max: 5,
-	message: { message: 'Trop de tentatives, réessayez plus tard.' },
-});
 
 const router = express.Router();
 
 router.post('/register', validateRegister, registerUser);
-router.post('/login', validateLogin, authLimiter, loginUser);
+router.post('/login', validateLogin, loginUser);
 router.post('/refresh-token', refreshToken);
 router.post('/logout', protect, logoutUser);
 router.get('/me', protect, getMe);
 router.put('/me', protect, updateMe);
 router.patch('/me/email', protect, updateMyEmail);
-router.patch('/me/password', protect, authLimiter, changeMyPassword);
+router.patch('/me/password', protect, changeMyPassword);
 router.post('/me/profile-picture', protect, upload.single('file'), uploadMyProfilePicture);
 router.post('/verify-email', validateVerifyEmail, verifyEmail);
-router.post('/forgot-password', validateForgotPassword, authLimiter, forgotPassword);
+router.post('/forgot-password', validateForgotPassword, forgotPassword);
 router.post('/reset-password', validateResetPassword, resetPassword);
 
 module.exports = router;

@@ -1,10 +1,98 @@
 const User = require('../models/User');
 const { logAudit, getRequestMeta } = require('../utils/auditLog');
+const notificationService = require('../services/notificationService');
 
 const getUsers = async (req, res) => {
   try {
     const users = await User.find({}).select('-password -refreshToken -twoFactorSecret');
     res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Liste des demandes d'inscription en attente (admin)
+// @route   GET /api/users/pending/registrations
+// @access  Admin
+const getPendingRegistrations = async (req, res) => {
+  try {
+    const pending = await User.find({ registrationStatus: 'pending' })
+      .select('-password -refreshToken -twoFactorSecret')
+      .sort({ createdAt: -1 });
+    res.json(pending);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Accepter une demande d'inscription (admin)
+// @route   POST /api/users/:id/approve-registration
+// @access  Admin
+const approveRegistration = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+    if (user.registrationStatus !== 'pending') {
+      return res.status(400).json({ message: 'Cette demande n\'est plus en attente.' });
+    }
+    user.registrationStatus = 'approved';
+    user.isActive = true;
+    await user.save();
+    try {
+      await notificationService.notifyRegistrationDecision(user._id, true);
+    } catch (e) {
+      console.error('Notification inscription approuvée:', e);
+    }
+
+    const meta = getRequestMeta(req);
+    await logAudit({
+      action: 'APPROVE_REGISTRATION',
+      entity: 'User',
+      entityId: user._id,
+      performedBy: req.user._id,
+      performedByEmail: req.user.email,
+      changes: { after: { registrationStatus: 'approved' } },
+      ...meta,
+    });
+
+    const updated = await User.findById(user._id).select('-password -refreshToken -twoFactorSecret');
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Refuser une demande d'inscription (admin)
+// @route   POST /api/users/:id/reject-registration
+// @access  Admin
+const rejectRegistration = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'Utilisateur introuvable.' });
+    if (user.registrationStatus !== 'pending') {
+      return res.status(400).json({ message: 'Cette demande n\'est plus en attente.' });
+    }
+    user.registrationStatus = 'rejected';
+    await user.save();
+    try {
+      await notificationService.notifyRegistrationDecision(user._id, false);
+    } catch (e) {
+      console.error('Notification inscription refusée:', e);
+    }
+
+    const meta = getRequestMeta(req);
+    await logAudit({
+      action: 'REJECT_REGISTRATION',
+      entity: 'User',
+      entityId: user._id,
+      performedBy: req.user._id,
+      performedByEmail: req.user.email,
+      changes: { after: { registrationStatus: 'rejected' } },
+      ...meta,
+    });
+
+    const updated = await User.findById(user._id).select('-password -refreshToken -twoFactorSecret');
+    res.json(updated);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -154,6 +242,9 @@ const getUserById = async (req, res) => {
 module.exports = {
   getUsers,
   getUserById,
+  getPendingRegistrations,
+  approveRegistration,
+  rejectRegistration,
   createUser,
   updateUser,
   updateUserRole,

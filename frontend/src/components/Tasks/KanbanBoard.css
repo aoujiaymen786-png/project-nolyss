@@ -1,4 +1,22 @@
 /* Kanban Container */
+.kanban-success-banner {
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #059669;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  font-weight: 500;
+}
+
+.kanban-add-task {
+  padding: 0.4rem 0.9rem;
+  font-size: 0.9rem;
+  text-decoration: none;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
 .kanban-container {
   padding: 0.5rem;
   min-height: calc(100vh - var(--navbar-height));

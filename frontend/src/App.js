@@ -28,6 +28,7 @@ import InvoiceForm from './components/Invoices/InvoiceForm';
 import QuoteList from './components/Quotes/QuoteList';
 import QuoteForm from './components/Quotes/QuoteForm';
 import ClientDashboard from './components/ClientPortal/ClientDashboard';
+import ClaimsList from './components/Claims/ClaimsList';
 import ProfilePage from './components/Profile/ProfilePage';
 import AdminLayout from './components/Admin/AdminLayout';
 import AdminDashboardPage from './components/Admin/AdminDashboardPage';
@@ -87,6 +88,7 @@ function App() {
             <Route path="/profile" element={<PrivateLayout><ProfilePage /></PrivateLayout>} />
             
             <Route path="/clients" element={<PrivateLayout><ClientList /></PrivateLayout>} />
+            <Route path="/clients/claims" element={<RoleRoute allowedRoles={['director', 'coordinator', 'admin']}><PrivateLayout><ClaimsList /></PrivateLayout></RoleRoute>} />
             <Route path="/clients/new" element={<PrivateLayout><ClientForm /></PrivateLayout>} />
             <Route path="/clients/edit/:id" element={<PrivateLayout><ClientForm /></PrivateLayout>} />
             <Route path="/clients/:id" element={<PrivateLayout><ClientDetail /></PrivateLayout>} />
@@ -108,11 +110,11 @@ function App() {
             <Route path="/invoices/:id" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><InvoiceForm /></PrivateLayout></RoleRoute>} />
             <Route path="/invoices/:id/edit" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><InvoiceForm /></PrivateLayout></RoleRoute>} />
             
-            <Route path="/quotes" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><QuoteList /></PrivateLayout></RoleRoute>} />
+<Route path="/quotes" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><QuoteList /></PrivateLayout></RoleRoute>} />
             <Route path="/quotes/new" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><QuoteForm /></PrivateLayout></RoleRoute>} />
             <Route path="/quotes/:id" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><QuoteForm /></PrivateLayout></RoleRoute>} />
             <Route path="/quotes/:id/edit" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><QuoteForm /></PrivateLayout></RoleRoute>} />
-            
+
             <Route path="/client" element={
               <RoleRoute allowedRoles={['client']}>
                 <Layout><ClientDashboard /></Layout>

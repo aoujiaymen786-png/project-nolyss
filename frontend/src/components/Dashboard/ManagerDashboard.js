@@ -47,6 +47,7 @@ const ManagerDashboard = () => {
   const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeTaskStatusSlice, setActiveTaskStatusSlice] = useState(null);
 
   useEffect(() => {
     const fetchMyProjectsStats = async () => {
@@ -70,6 +71,21 @@ const ManagerDashboard = () => {
     ...s,
     label: TASK_STATUS_LABELS[s._id] || s._id,
   }));
+
+  const renderChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    return (
+      <div className="chart-tooltip">
+        {label && <div className="chart-tooltip-label">{label}</div>}
+        {payload.map((entry, index) => (
+          <div key={index} className="chart-tooltip-item">
+            <span className="chart-tooltip-name">{entry.name}</span>
+            <span className="chart-tooltip-value">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   const escapeCsv = (value) => `"${String(value ?? '').replace(/"/g, '""')}"`;
   const downloadCsv = (filename, headers, rows) => {
@@ -221,14 +237,14 @@ const ManagerDashboard = () => {
             {stats.projectTimeline && stats.projectTimeline.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
                 <LineChart data={stats.projectTimeline}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.25)" />
                   <XAxis dataKey="date" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip content={renderChartTooltip} />
                   <Legend />
-                  <Line type="monotone" dataKey="completed" stroke="#10b981" strokeWidth={2} />
-                  <Line type="monotone" dataKey="inProgress" stroke="#f59e0b" strokeWidth={2} />
-                  <Line type="monotone" dataKey="pending" stroke="#ef4444" strokeWidth={2} />
+                  <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="inProgress" stroke="#0ea5e9" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="pending" stroke="#f97316" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}
@@ -239,22 +255,35 @@ const ManagerDashboard = () => {
           <div className="chart-card">
             <h3>Tâches par Statut</h3>
             {tasksByStatusForChart.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
+              <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
+                  <defs>
+                    <linearGradient id="managerPieGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" />
+                      <stop offset="50%" stopColor="#0ea5e9" />
+                      <stop offset="100%" stopColor="#22c55e" />
+                    </linearGradient>
+                  </defs>
                   <Pie
                     data={tasksByStatusForChart}
                     dataKey="count"
                     nameKey="label"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
+                    innerRadius={60}
+                    outerRadius={110}
+                    paddingAngle={2}
                     label
+                    isAnimationActive
+                    animationDuration={900}
+                    activeIndex={activeTaskStatusSlice}
+                    onMouseEnter={(_, index) => setActiveTaskStatusSlice(index)}
                   >
                     {tasksByStatusForChart.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={`cell-${index}`} fill="url(#managerPieGradient)" />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={renderChartTooltip} />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -267,12 +296,22 @@ const ManagerDashboard = () => {
             <h3>Charge par Membre</h3>
             {stats.tasksByMember && stats.tasksByMember.length > 0 ? (
               <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={stats.tasksByMember}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart data={stats.tasksByMember} barCategoryGap={24} barGap={8}>
+                  <defs>
+                    <linearGradient id="managerBarTasks" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#38bdf8" />
+                      <stop offset="100%" stopColor="#0f766e" />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="member" angle={-45} textAnchor="end" height={80} />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="taskCount" fill="rgb(223, 48, 0)" />
+                  <Tooltip content={renderChartTooltip} />
+                  <Bar
+                    dataKey="taskCount"
+                    fill="url(#managerBarTasks)"
+                    radius={[10, 10, 0, 0]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}

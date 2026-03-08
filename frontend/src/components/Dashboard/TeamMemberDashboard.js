@@ -39,6 +39,7 @@ const PRIORITY_LABELS = {
 
 const TeamMemberDashboard = () => {
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [savingTaskId, setSavingTaskId] = useState('');
   const [taskDrafts, setTaskDrafts] = useState({});
@@ -54,6 +55,7 @@ const TeamMemberDashboard = () => {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setError(null);
       try {
         const { data: res } = await API.get('/dashboard/team-member-stats');
         setData(res);
@@ -64,6 +66,7 @@ const TeamMemberDashboard = () => {
         setTaskDrafts(drafts);
       } catch (err) {
         console.error('Erreur tableau de bord membre:', err);
+        setError(err.response?.data?.message || err.message || 'Erreur lors du chargement');
       } finally {
         setLoading(false);
       }
@@ -83,7 +86,7 @@ const TeamMemberDashboard = () => {
   }, [activeTimers]);
 
   if (loading) return <div className="dashboard-loading">Chargement...</div>;
-  if (!data) return <div className="dashboard-error">Erreur lors du chargement</div>;
+  if (!data) return <div className="dashboard-error">{error || 'Erreur lors du chargement'}</div>;
 
   const { myTasksInProgress, overdueTasks, assignedProjects, timeWorked, upcomingDeadlines, notifications, timeHistory, recentComments } = data;
 
@@ -254,10 +257,17 @@ const TeamMemberDashboard = () => {
                     </td>
                     <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>
-                      {task.project?._id && <Link to={`/tasks/edit/${task._id}`}>Détails</Link>}{' '}
-                      <button type="button" onClick={() => saveTaskQuickUpdate(task._id)} disabled={savingTaskId === task._id}>
-                        {savingTaskId === task._id ? 'Enregistrement…' : 'Enregistrer'}
-                      </button>
+                      <div className="quick-actions-cell">
+                        <Link to={`/tasks/edit/${task._id}`} className="quick-action-link">Détails</Link>
+                        <button
+                          type="button"
+                          className="quick-action-btn"
+                          onClick={() => saveTaskQuickUpdate(task._id)}
+                          disabled={savingTaskId === task._id}
+                        >
+                          {savingTaskId === task._id ? 'Enregistrement…' : 'Enregistrer'}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -289,8 +299,10 @@ const TeamMemberDashboard = () => {
                     <td>{task.project?.name || '–'}</td>
                     <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>
-                      <Link to={task.project?._id ? `/projects/${task.project._id}` : '#'}>Voir</Link>
-                      {task.project?._id && <Link to={`/tasks/edit/${task._id}`}> Modifier</Link>}
+                      <div className="quick-actions-cell">
+                        {task.project?._id && <Link to={`/projects/${task.project._id}`} className="quick-action-link">Voir projet</Link>}
+                        <Link to={`/tasks/edit/${task._id}`} className="quick-action-link">Modifier</Link>
+                      </div>
                     </td>
                   </tr>
                 ))}

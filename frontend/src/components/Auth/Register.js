@@ -15,11 +15,16 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await API.post('/auth/register', { name, email, password, phone, role });
+      const { data } = await API.post('/auth/register', { name, email, password, phone, role });
+      if (data.requiresApproval) {
+        alert(data.message || 'Votre inscription a été enregistrée. Vous pourrez vous connecter une fois qu\'un administrateur aura validé votre compte.');
+        navigate('/login');
+        return;
+      }
       alert('Inscription réussie ! Vous pouvez maintenant vous connecter.');
-      navigate('/');
+      navigate('/login');
     } catch (error) {
-      alert('Erreur lors de l\'inscription');
+      alert(error.response?.data?.message || 'Erreur lors de l\'inscription');
     }
   };
 

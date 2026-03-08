@@ -7,6 +7,7 @@ const {
   deleteInvoice,
   validateInvoice,
   recordPayment,
+  sendReminder,
   exportFEC,
 } = require('../controllers/invoiceController');
 const { protect } = require('../middleware/authMiddleware');
@@ -27,5 +28,6 @@ router.route('/:id')
 
 router.patch('/:id/validate', protect, authorize('VALIDATE_INVOICE'), validateInvoice);
 router.post('/:id/payments', protect, recordPayment);
+router.post('/:id/send-reminder', protect, authorize('VALIDATE_INVOICE'), sendReminder);
 
 module.exports = router;

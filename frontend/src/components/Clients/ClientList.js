@@ -14,6 +14,7 @@ const ClientList = () => {
   const [loading, setLoading] = useState(true);
 
   const canDelete = user?.role === 'admin' || user?.role === 'director';
+  const canSeeClaims = ['admin', 'director', 'coordinator'].includes(user?.role);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -69,7 +70,12 @@ const ClientList = () => {
     <div className="client-list-page invoices-container">
       <div className="page-header client-list-header">
         <h1>Gestion des clients</h1>
-        <Link to="/clients/new" className="btn btn-primary">Nouveau client</Link>
+        <div className="client-list-header-actions">
+          {canSeeClaims && (
+            <Link to="/clients/claims" className="btn btn-secondary client-list-btn-claims">Réclamations</Link>
+          )}
+          <Link to="/clients/new" className="btn btn-primary">Nouveau client</Link>
+        </div>
       </div>
       <DataTable
         columns={columns}

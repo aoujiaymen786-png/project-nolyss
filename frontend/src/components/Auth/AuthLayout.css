@@ -48,7 +48,6 @@
               0 0 40px rgba(223, 48, 0, 0.2);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  animation: fadeIn 0.6s ease-out;
   width: 100%;
   max-width: 380px;
   margin: 0 auto;

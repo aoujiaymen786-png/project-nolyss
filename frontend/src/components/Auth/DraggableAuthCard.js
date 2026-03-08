@@ -89,34 +89,10 @@ const useDraggable = () => {
   };
 };
 
-const DraggableAuthCard = ({ children, className = '', dragHandleClassName = '' }) => {
-  const { position, isDragging, handleMouseDown, handleTouchStart } = useDraggable();
-
+const DraggableAuthCard = ({ children, className = '' }) => {
   return (
-    <div
-      className={`draggable-auth-card-wrapper`}
-      style={{
-        transform: `translate(${position.x}px, ${position.y}px)`,
-        transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
-      }}
-    >
-      <div
-        className={`draggable-auth-card ${className}`.trim()}
-        style={{
-          animation: !isDragging ? 'cardFloat 4s ease-in-out infinite' : 'none',
-          boxShadow: isDragging ? '0 25px 70px rgba(0, 0, 0, 0.35)' : undefined,
-          transition: 'box-shadow 0.3s ease',
-        }}
-      >
-        <div
-          className={`draggable-auth-card-handle ${dragHandleClassName}`.trim()}
-          onMouseDown={handleMouseDown}
-          onTouchStart={handleTouchStart}
-        >
-          <span className="draggable-auth-card-grip" aria-hidden="true">
-            ⋮⋮
-          </span>
-        </div>
+    <div className="draggable-auth-card-wrapper">
+      <div className={`draggable-auth-card ${className}`.trim()}>
         {children}
       </div>
     </div>

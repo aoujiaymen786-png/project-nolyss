@@ -182,6 +182,11 @@
   padding: 16px 20px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   background: rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 :root.dark-mode .navbar-notification-header {
@@ -196,6 +201,22 @@
   color: var(--text-primary);
 }
 
+.navbar-notification-mark-all {
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.navbar-notification-mark-all:hover {
+  background: var(--primary-light);
+}
+
 .navbar-notification-list {
   max-height: 300px;
   overflow-y: auto;
@@ -207,14 +228,36 @@
   color: var(--text-primary);
   border-bottom: 1px solid rgba(0, 0, 0, 0.04);
   transition: background 0.15s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navbar-notification-item-unread {
+  background: rgba(var(--primary-rgb, 223, 48, 0), 0.06);
 }
 
 :root.dark-mode .navbar-notification-item {
   border-color: rgba(255, 255, 255, 0.04);
 }
 
+:root.dark-mode .navbar-notification-item-unread {
+  background: rgba(255, 255, 255, 0.06);
+}
+
 .navbar-notification-item:hover {
   background: var(--surface-hover);
+}
+
+.navbar-notification-title {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.navbar-notification-message {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 
 .navbar-notification-empty {

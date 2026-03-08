@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Sun, Moon, Bell, LogOut } from 'lucide-react';
 import { AuthContext } from '../../contexts/AuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
+import API from '../../utils/api';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -11,7 +12,27 @@ const Navbar = () => {
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef(null);
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      const { data } = await API.get('/notifications');
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unreadCount ?? 0);
+    } catch (e) {
+      console.error('Chargement notifications:', e);
+    }
+  };
+
+  useEffect(() => {
+    if (user) fetchNotifications();
+    else {
+      setNotifications([]);
+      setUnreadCount(0);
+    }
+  }, [user]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -26,6 +47,33 @@ const Navbar = () => {
   const handleLogout = async () => {
     await logout();
     navigate('/');
+  };
+
+  const handleNotificationClick = async (n) => {
+    if (n.link) {
+      setNotificationsOpen(false);
+      navigate(n.link);
+    }
+    if (n._id && !n.read) {
+      try {
+        await API.patch(`/notifications/${n._id}/read`);
+        setNotifications((prev) => prev.map((x) => (x._id === n._id ? { ...x, read: true } : x)));
+        setUnreadCount((c) => Math.max(0, c - 1));
+      } catch (e) {
+        console.error('Marquer notification lue:', e);
+      }
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await API.patch('/notifications/read-all');
+      const { data } = await API.get('/notifications');
+      setNotifications(data.notifications || []);
+      setUnreadCount(0);
+    } catch (e) {
+      console.error('Tout marquer comme lu:', e);
+    }
   };
 
   return (
@@ -63,20 +111,33 @@ const Navbar = () => {
                   aria-expanded={notificationsOpen}
                 >
                   <Bell size={20} />
-                  {notifications.length > 0 && (
-                    <span className="navbar-notification-badge">{notifications.length > 9 ? '9+' : notifications.length}</span>
+                  {unreadCount > 0 && (
+                    <span className="navbar-notification-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
                   )}
                 </button>
                 {notificationsOpen && (
                   <div className="navbar-notification-dropdown">
                     <div className="navbar-notification-header">
                       <h4>Notifications</h4>
+                      {unreadCount > 0 && (
+                        <button type="button" className="navbar-notification-mark-all" onClick={handleMarkAllRead}>
+                          Tout marquer comme lu
+                        </button>
+                      )}
                     </div>
                     <div className="navbar-notification-list">
                       {notifications.length > 0 ? (
-                        notifications.slice(0, 8).map((n, i) => (
-                          <div key={i} className="navbar-notification-item">
-                            {typeof n === 'string' ? n : (n.message || n.text || n.title || 'Notification')}
+                        notifications.slice(0, 8).map((n) => (
+                          <div
+                            key={n._id}
+                            role="button"
+                            tabIndex={0}
+                            className={`navbar-notification-item ${n.read ? '' : 'navbar-notification-item-unread'}`}
+                            onClick={() => handleNotificationClick(n)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleNotificationClick(n)}
+                          >
+                            <span className="navbar-notification-title">{n.title || 'Notification'}</span>
+                            {n.message && <span className="navbar-notification-message">{n.message}</span>}
                           </div>
                         ))
                       ) : (

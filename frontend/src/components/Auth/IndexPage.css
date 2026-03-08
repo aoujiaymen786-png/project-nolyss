@@ -1,6 +1,7 @@
 /* Animated Gradient Background */
 .index-page {
-  position: relative;
+  position: fixed;
+  inset: 0;
   z-index: 0; /* Crée un contexte d'empilement pour que le gradient reste visible (ne passe pas derrière body) */
   min-height: 100vh;
   min-width: 100vw;
@@ -9,6 +10,9 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding: 20px;
+  width: 100%;
+  box-sizing: border-box;
   flex: 0 0 auto;
 }
 
@@ -21,18 +25,6 @@
   background: var(--design-gradient-full);
   z-index: -1; /* Derrière le contenu de .index-page, mais visible grâce au z-index: 0 du parent */
   transform: translateZ(0);
-}
-
-/* Overlay for better readability: center content using flex to ensure consistent centering */
-.index-page {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  overflow: hidden;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 /* Main Container */

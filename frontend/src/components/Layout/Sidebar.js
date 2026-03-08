@@ -35,12 +35,12 @@ const Sidebar = () => {
         <li>
           <NavLink to="/profile" className={linkClass}>Mon profil</NavLink>
         </li>
-        {(role === 'admin' || role === 'director' || role === 'coordinator') && (
+        {(role === 'director' || role === 'coordinator') && (
           <li>
             <NavLink to="/clients" className={linkClass}>Clients</NavLink>
           </li>
         )}
-        {role !== 'client' && role !== 'admin' && (
+        {role !== 'client' && role !== 'admin' && role !== 'director' && (
           <li>
             <NavLink to="/projects" className={linkClass}>Projets</NavLink>
           </li>
@@ -58,6 +58,11 @@ const Sidebar = () => {
         {role === 'director' && (
           <li>
             <NavLink to="/quotes" className={linkClass}>Devis</NavLink>
+          </li>
+        )}
+        {role === 'director' && (
+          <li>
+            <NavLink to="/projects" className={linkClass}>Consulter les projets</NavLink>
           </li>
         )}
         {role === 'admin' && (

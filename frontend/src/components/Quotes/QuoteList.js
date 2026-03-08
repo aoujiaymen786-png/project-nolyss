@@ -12,6 +12,14 @@ const QuoteList = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
 
+  const quoteStatusLabel = {
+    draft: 'Brouillon',
+    sent: 'Envoyé',
+    accepted: 'Accepté',
+    refused: 'Refusé',
+    converted: 'Converti',
+  };
+
   useEffect(() => {
     fetchQuotes();
   }, []);
@@ -124,7 +132,7 @@ const QuoteList = () => {
                 <td>{quote.client?.name || 'N/A'}</td>
                 <td>{quote.lines?.[0]?.description || '-'}</td>
                 <td className="amount">{quote.totalTTC?.toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
-                <td><span className={`status-${quote.status}`}>{quote.status}</span></td>
+                <td><span className={`status-${quote.status}`}>{quoteStatusLabel[quote.status] ?? quote.status}</span></td>
                 <td>{quote.date ? new Date(quote.date).toLocaleDateString('fr-FR') : '-'}</td>
                 <td>{quote.validUntil ? new Date(quote.validUntil).toLocaleDateString('fr-FR') : '-'}</td>
                 <td className="actions">

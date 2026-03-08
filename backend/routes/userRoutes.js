@@ -2,6 +2,9 @@ const express = require('express');
 const {
   getUsers,
   getUserById,
+  getPendingRegistrations,
+  approveRegistration,
+  rejectRegistration,
   createUser,
   updateUser,
   updateUserRole,
@@ -17,6 +20,11 @@ router.use(protect);
 
 // Liste des utilisateurs (admin, director)
 router.get('/', authorize('VIEW_USERS'), getUsers);
+
+// Demandes d'inscription en attente (admin uniquement)
+router.get('/pending/registrations', authorize('CREATE_USER'), getPendingRegistrations);
+router.post('/:id/approve-registration', authorize('CREATE_USER'), approveRegistration);
+router.post('/:id/reject-registration', authorize('CREATE_USER'), rejectRegistration);
 
 // Détail utilisateur (admin)
 router.get('/:id', authorize('VIEW_USERS'), getUserById);

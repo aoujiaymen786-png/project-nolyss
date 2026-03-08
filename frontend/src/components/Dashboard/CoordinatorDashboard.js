@@ -29,6 +29,7 @@ const CoordinatorDashboard = () => {
   const [data, setData] = useState(null);
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [activeProjectSlice, setActiveProjectSlice] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -48,11 +49,60 @@ const CoordinatorDashboard = () => {
     fetchData();
   }, []);
 
+  const escapeCsv = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const downloadCsv = (filename, headers, rows) => {
+    const csv = [headers.map(escapeCsv).join(','), ...rows.map((r) => r.map(escapeCsv).join(','))].join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
+  const exportRapportAvancement = () => {
+    const overview = data.projectsOverview || [];
+    const headers = ['Projet', 'Client', 'Responsable', 'Statut', 'Avancement %', 'Tâches terminées', 'Tâches total', 'Échéance', 'Heures estimées', 'Heures réalisées'];
+    const rows = overview.map((p) => [
+      p.name,
+      p.client || '-',
+      p.manager || '-',
+      p.status || '-',
+      p.progress ?? 0,
+      p.doneTasks ?? 0,
+      p.totalTasks ?? 0,
+      p.deadline ? new Date(p.deadline).toLocaleDateString('fr-FR') : '-',
+      p.estimatedHours ?? 0,
+      p.actualHours ?? 0,
+    ]);
+    downloadCsv('rapport-avancement-coordinateur.csv', headers, rows);
+  };
+  const exportRapportTemps = () => {
+    const report = data.timeReport || [];
+    const headers = ['Projet', 'Tâche', 'Assigné(s)', 'Heures estimées', 'Heures réalisées'];
+    const rows = report.map((r) => [r.project || '-', r.task || '-', r.assignedTo || '-', r.estimatedHours ?? 0, r.actualHours ?? 0]);
+    downloadCsv('rapport-temps-coordinateur.csv', headers, rows);
+  };
+
   if (loading) return <div className="dashboard-loading">Chargement...</div>;
   if (!data) return <div className="dashboard-error">Erreur lors du chargement</div>;
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)', 'rgb(255, 145, 37)', 'rgb(114, 224, 232)'];
   const kpis = data.kpis || {};
+
+  const renderChartTooltip = ({ active, payload, label }) => {
+    if (!active || !payload || !payload.length) return null;
+    return (
+      <div className="chart-tooltip">
+        {label && <div className="chart-tooltip-label">{label}</div>}
+        {payload.map((entry, index) => (
+          <div key={index} className="chart-tooltip-item">
+            <span className="chart-tooltip-name">{entry.name}</span>
+            <span className="chart-tooltip-value">{entry.value}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <div className="dashboard-container">
@@ -61,20 +111,25 @@ const CoordinatorDashboard = () => {
         <p>Supervision opérationnelle globale, ressources et avancement multi-projets</p>
       </div>
 
-      {/* Section Gérer projet */}
+      {/* Section Gérer projet et tâches */}
       <div className="table-section coordinator-gerer-section">
-        <h3>Gérer projet</h3>
+        <h3>Projets et tâches</h3>
         <p className="muted">
-         
+          Création et configuration de projets, affectation des ressources, planification (jalons, sprints). Gestion des tâches : création, modification et suivi dans chaque projet (Vue liste, Kanban, Gantt).
         </p>
         <div className="manager-task-actions coordinator-gerer-actions">
-          <Link to="/projects" className="btn-dashboard">Suivre avancement</Link>
-          <Link to="/kanban" className="btn-dashboard btn-dashboard-secondary">Planifier / Kanban</Link>
+          <Link to="/projects" className="btn-dashboard">Projets — suivi avancement</Link>
+          <Link to="/kanban" className="btn-dashboard btn-dashboard-secondary">Kanban — tâches</Link>
           <Link to="/projects" className="btn-dashboard btn-dashboard-secondary">Affecter ressources</Link>
           <Link to="/projects/new" className="btn-dashboard btn-dashboard-secondary">Créer un projet</Link>
           <Link to="/clients/new" className="btn-dashboard btn-dashboard-secondary">Créer un client</Link>
-          
-          
+          <Link to="/projects" className="btn-dashboard btn-dashboard-secondary">Créer / modifier tâches</Link>
+          <Link to="/projects" className="btn-dashboard btn-dashboard-secondary">Documents & communication</Link>
+          <span className="coordinator-reports-wrap">
+            <span className="coordinator-reports-label">Rapports :</span>
+            <button type="button" className="btn-dashboard btn-dashboard-secondary" onClick={exportRapportAvancement}>Export avancement (CSV)</button>
+            <button type="button" className="btn-dashboard btn-dashboard-secondary" onClick={exportRapportTemps}>Export temps (CSV)</button>
+          </span>
           <select
             className="manager-create-task-select coordinator-select-project"
             defaultValue=""
@@ -121,12 +176,35 @@ const CoordinatorDashboard = () => {
           <div className="chart-card">
             <h3>Répartition des projets actifs</h3>
             {(data.projectsByStatus || []).length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
+              <ResponsiveContainer width="100%" height={320}>
                 <PieChart>
-                  <Pie data={data.projectsByStatus.map((s) => ({ ...s, label: STATUS_LABELS[s._id] || s._id }))} dataKey="count" nameKey="label" cx="50%" cy="50%" outerRadius={90} label>
-                    {(data.projectsByStatus || []).map((entry, idx) => <Cell key={entry._id || idx} fill={COLORS[idx % COLORS.length]} />)}
+                  <defs>
+                    <linearGradient id="coordPieGradient" x1="0" y1="0" x2="1" y2="1">
+                      <stop offset="0%" stopColor="#0ea5e9" />
+                      <stop offset="50%" stopColor="#6366f1" />
+                      <stop offset="100%" stopColor="#a855f7" />
+                    </linearGradient>
+                  </defs>
+                  <Pie
+                    data={data.projectsByStatus.map((s) => ({ ...s, label: STATUS_LABELS[s._id] || s._id }))}
+                    dataKey="count"
+                    nameKey="label"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={65}
+                    outerRadius={120}
+                    paddingAngle={2}
+                    label
+                    isAnimationActive
+                    animationDuration={900}
+                    activeIndex={activeProjectSlice}
+                    onMouseEnter={(_, index) => setActiveProjectSlice(index)}
+                  >
+                    {(data.projectsByStatus || []).map((entry, idx) => (
+                      <Cell key={entry._id || idx} fill="url(#coordPieGradient)" />
+                    ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip content={renderChartTooltip} />
                 </PieChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}
@@ -138,12 +216,26 @@ const CoordinatorDashboard = () => {
             <h3>Répartition des ressources</h3>
             {(data.resourceDistribution || []).length > 0 ? (
               <ResponsiveContainer width="100%" height={260}>
-                <BarChart data={(data.resourceDistribution || []).slice(0, 12)}>
-                  <CartesianGrid strokeDasharray="3 3" />
+                <BarChart
+                  data={(data.resourceDistribution || []).slice(0, 12)}
+                  barCategoryGap={26}
+                  barGap={8}
+                >
+                  <defs>
+                    <linearGradient id="coordBarResources" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#fb923c" />
+                      <stop offset="100%" stopColor="#b91c1c" />
+                    </linearGradient>
+                  </defs>
                   <XAxis dataKey="name" angle={-30} textAnchor="end" height={70} />
                   <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="openTasks" fill="rgb(223, 48, 0)" />
+                  <Tooltip content={renderChartTooltip} />
+                  <Bar
+                    dataKey="openTasks"
+                    fill="url(#coordBarResources)"
+                    radius={[10, 10, 0, 0]}
+                    animationDuration={900}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             ) : <p className="chart-empty">Pas de données</p>}

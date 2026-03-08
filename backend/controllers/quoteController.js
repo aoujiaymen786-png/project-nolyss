@@ -101,7 +101,7 @@ const deleteQuote = async (req, res) => {
     if (quote.status !== 'draft') {
       return res.status(400).json({ message: 'Impossible de supprimer un devis non brouillon' });
     }
-    await quote.remove();
+    await quote.deleteOne();
     res.json({ message: 'Devis supprimé' });
   } catch (error) {
     res.status(500).json({ message: error.message });

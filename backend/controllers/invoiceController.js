@@ -1,7 +1,10 @@
 const Invoice = require('../models/Invoice');
 const Quote = require('../models/Quote');
 const Project = require('../models/Project');
+const Client = require('../models/Client');
 const SystemSettings = require('../models/SystemSettings');
+const nodemailer = require('nodemailer');
+const notificationService = require('../services/notificationService');
 
 const generateInvoiceNumber = async (customPrefix) => {
   const prefix = customPrefix || 'FAC';
@@ -12,10 +15,31 @@ const generateInvoiceNumber = async (customPrefix) => {
   return `${prefix}-${year}-${(lastSeq + 1).toString().padStart(4, '0')}`;
 };
 
+const sanitizeInvoiceBody = (body) => {
+  const sanitized = { ...body };
+  if (sanitized.quote === '' || sanitized.quote === null) delete sanitized.quote;
+  if (sanitized.project === '' || sanitized.project === null) delete sanitized.project;
+  if (Array.isArray(sanitized.lines)) {
+    sanitized.lines = sanitized.lines
+      .map((l) => ({
+        ...l,
+        description: typeof l.description === 'string' ? l.description.trim() : String(l.description || ''),
+      }))
+      .filter((l) => l.description && l.quantity != null && l.unitPrice != null);
+    if (sanitized.lines.length === 0) {
+      const err = new Error('Au moins une ligne avec une description, une quantité et un prix unitaire est requise.');
+      err.status = 400;
+      throw err;
+    }
+  }
+  return sanitized;
+};
+
 const createInvoice = async (req, res) => {
   try {
     const { quoteId, number: customNumber, numberPrefix, ...body } = req.body;
-    let invoiceData = { ...body, createdBy: req.user._id };
+    const sanitizedBody = sanitizeInvoiceBody(body);
+    let invoiceData = { ...sanitizedBody, createdBy: req.user._id };
 
     if (quoteId) {
       const quote = await Quote.findById(quoteId).populate('client');
@@ -96,11 +120,25 @@ const updateInvoice = async (req, res) => {
     if (!invoice) {
       return res.status(404).json({ message: 'Facture non trouvée' });
     }
-    if (invoice.status !== 'draft') {
-      return res.status(400).json({ message: 'Impossible de modifier une facture non brouillon' });
+    if (!['draft', 'sent'].includes(invoice.status)) {
+      return res.status(400).json({ message: 'Impossible de modifier une facture déjà payée ou partiellement payée.' });
     }
-    Object.assign(invoice, req.body);
+    const sanitized = sanitizeInvoiceBody(req.body);
+    const wasDraft = invoice.status === 'draft';
+    Object.assign(invoice, sanitized);
     const updatedInvoice = await invoice.save();
+    if (wasDraft && updatedInvoice.status === 'sent') {
+      try {
+        const inv = await Invoice.findById(updatedInvoice._id).populate('client', 'name').lean();
+        await notificationService.notifyInvoiceSent(inv || updatedInvoice, inv?.client?.name);
+        const clientId = updatedInvoice.client?._id ?? updatedInvoice.client;
+        if (clientId) {
+          await notificationService.notifyClientInvoiceAvailable(updatedInvoice, clientId);
+        }
+      } catch (e) {
+        console.error('Notifications facture envoyée:', e);
+      }
+    }
     res.json(updatedInvoice);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -116,7 +154,7 @@ const deleteInvoice = async (req, res) => {
     if (invoice.status !== 'draft') {
       return res.status(400).json({ message: 'Impossible de supprimer une facture non brouillon' });
     }
-    await invoice.remove();
+    await invoice.deleteOne();
     res.json({ message: 'Facture supprimée' });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -172,6 +210,60 @@ const recordPayment = async (req, res) => {
   }
 };
 
+// Relance facture : envoi d'un email de rappel au client (directeur)
+const sendReminder = async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id).populate('client', 'name email contacts');
+    if (!invoice) return res.status(404).json({ message: 'Facture non trouvée' });
+    if (['draft', 'paid', 'cancelled'].includes(invoice.status)) {
+      return res.status(400).json({ message: 'Seules les factures envoyées, en retard ou partiellement payées peuvent être relancées' });
+    }
+    const total = invoice.totalTTC || 0;
+    const paid = invoice.paidAmount || 0;
+    const remaining = total - paid;
+    if (remaining < 0.01) return res.status(400).json({ message: 'Facture déjà réglée' });
+
+    const client = invoice.client;
+    if (!client) return res.status(400).json({ message: 'Client inconnu' });
+    let toEmail = client.email;
+    if (!toEmail && client.contacts?.length) {
+      const primary = client.contacts.find((c) => c.isPrimary && c.email);
+      toEmail = primary?.email || client.contacts.find((c) => c.email)?.email;
+    }
+    if (!toEmail) return res.status(400).json({ message: 'Aucune adresse e-mail pour ce client' });
+
+    if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT || 587,
+        secure: false,
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      });
+      const dueStr = invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('fr-FR') : '';
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: toEmail,
+        subject: `Rappel : facture ${invoice.number} - solde à régler`,
+        html: `
+          <p>Bonjour,</p>
+          <p>Nous vous rappelons que la facture <strong>${invoice.number}</strong> (${client.name}) présente un solde restant à régler de <strong>${remaining.toFixed(2)} TND</strong>.</p>
+          ${dueStr ? `<p>Date d'échéance : ${dueStr}.</p>` : ''}
+          <p>Merci de procéder au règlement dans les meilleurs délais.</p>
+          <p>Cordialement,<br/>L'équipe</p>
+        `,
+      });
+    }
+
+    invoice.remindersSent = (invoice.remindersSent || 0) + 1;
+    invoice.lastReminderAt = new Date();
+    await invoice.save();
+
+    res.json({ message: 'Relance envoyée', remindersSent: invoice.remindersSent });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
 const exportFEC = async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
@@ -208,5 +300,6 @@ module.exports = {
   deleteInvoice,
   validateInvoice,
   recordPayment,
+  sendReminder,
   exportFEC,
 };

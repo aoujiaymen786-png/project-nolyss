@@ -5,6 +5,9 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { logAudit, getRequestMeta } = require('../utils/auditLog');
 
+// Rôles soumis à validation d'inscription par l'admin (nouvelle inscription uniquement)
+const ROLES_REQUIRING_APPROVAL = ['director', 'coordinator', 'projectManager', 'teamMember'];
+
 // @desc    Inscription
 // @route   POST /api/auth/register
 // @access  Public
@@ -16,25 +19,44 @@ const registerUser = async (req, res) => {
     return res.status(400).json({ message: 'Utilisateur déjà existant' });
   }
 
+  const normalizedRole = (role || 'teamMember').trim();
+  const requiresApproval = ROLES_REQUIRING_APPROVAL.includes(normalizedRole);
+
   const verificationToken = crypto.randomBytes(32).toString('hex');
 
-  const user = await User.create({
+  const userData = {
     name,
     email,
     phone,
     password,
-    role: role || '',
+    role: normalizedRole,
     isVerified: false,
     verificationToken,
-  });
+  };
+
+  if (requiresApproval) {
+    userData.registrationStatus = 'pending';
+  }
+
+  const user = await User.create(userData);
 
   if (user) {
+    if (requiresApproval) {
+      return res.status(201).json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        requiresApproval: true,
+        message: 'Votre inscription a été enregistrée. Vous pourrez vous connecter une fois qu\'un administrateur aura validé votre compte.',
+      });
+    }
+
     const accessToken = generateToken(user._id);
     const refreshToken = generateRefreshToken(user._id);
     user.refreshToken = refreshToken;
     await user.save();
 
-    // send verification email if SMTP configured, otherwise return token for dev
     let verificationUrl = null;
     try {
       if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
@@ -83,48 +105,44 @@ const loginUser = async (req, res) => {
   const user = await User.findOne({ email });
   if (!user) return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
 
-  // basic lockout check
-  if (user.lockUntil && user.lockUntil > Date.now()) {
-    return res.status(423).json({ message: 'Compte temporairement verrouillé. Réessayez plus tard.' });
+  if (!(await user.matchPassword(password))) {
+    return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
   }
 
-  if (user && (await user.matchPassword(password))) {
-    // reset failed attempts
-    user.failedLoginAttempts = 0;
-    user.lockUntil = null;
-
-    const accessToken = generateToken(user._id);
-    const refreshToken = generateRefreshToken(user._id);
-    user.refreshToken = refreshToken;
-    user.lastLoginAt = new Date();
-    await user.save();
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phone: user.phone,
-      role: user.role,
-      profilePicture: user.profilePicture,
-      jobTitle: user.jobTitle,
-      signature: user.signature,
-      lastLoginAt: user.lastLoginAt,
-      accessToken,
-      refreshToken,
+  if (user.registrationStatus === 'pending') {
+    return res.status(403).json({
+      message: 'Votre inscription est en attente de validation par l\'administrateur. Vous serez notifié une fois votre compte validé.',
+      code: 'REGISTRATION_PENDING',
     });
-  } else {
-    // increment failed attempts
-    if (user) {
-      user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
-      if (user.failedLoginAttempts >= 5) {
-        user.lockUntil = Date.now() + 15 * 60 * 1000; // 15 minutes
-      }
-      await user.save();
-    }
-    res.status(401).json({ message: 'Email ou mot de passe incorrect' });
   }
+  if (user.registrationStatus === 'rejected') {
+    return res.status(403).json({
+      message: 'Votre demande d\'inscription a été refusée. Contactez l\'administrateur pour plus d\'informations.',
+      code: 'REGISTRATION_REJECTED',
+    });
+  }
+
+  const accessToken = generateToken(user._id);
+  const refreshToken = generateRefreshToken(user._id);
+  user.refreshToken = refreshToken;
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  res.json({
+    _id: user._id,
+    name: user.name,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    profilePicture: user.profilePicture,
+    jobTitle: user.jobTitle,
+    signature: user.signature,
+    lastLoginAt: user.lastLoginAt,
+    accessToken,
+    refreshToken,
+  });
 };
 
 // @desc    Rafraîchir le token

@@ -135,6 +135,7 @@ const QuoteForm = () => {
   return (
     <div className="quote-form-container">
       <h1>{id ? 'Éditer le Devis' : 'Nouveau Devis'}</h1>
+      <p className="form-intro">Le devis est une proposition commerciale envoyée au client avant tout engagement. Il peut être accepté, refusé ou converti en facture/projet.</p>
 
       <form onSubmit={(e) => handleSubmit(e, formData.status)}>
         <div className="form-section">
@@ -298,7 +299,7 @@ const QuoteForm = () => {
             Enregistrer en Brouillon
           </button>
           <button type="button" onClick={(e) => handleSubmit(e, 'sent')} disabled={loading} className="btn btn-primary">
-            Envoyer au Client
+            Envoyer le devis au client
           </button>
           <button type="button" onClick={() => navigate(-1)} className="btn btn-outline">Annuler</button>
         </div>
