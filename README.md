@@ -1,10 +1,10 @@
-# 🚀 NOLYSS - Gestion Projets Moderne & Sécurisée
+# NOLYSS - Gestion Projets Moderne & Sécurisée
 
 **NOLYSS** est une plateforme complète de gestion de projets, factures et clients conçue pour les agences et équipes créatives.
 
 ---
 
-## 📋 Table des Matières
+## Table des Matières
 
 - [Vue d'Ensemble](#vue-densemble)
 - [Fonctionnalités](#fonctionnalités)
@@ -23,25 +23,25 @@
 ## 👀 Vue d'Ensemble
 
 NOLYSS est une solution intégrée pour :
-- ✅ **Gestion de projets** avec cycles de vie (prospection → livraison → clos)
-- ✅ **Gestion de tâches** avec Kanban interactif et Gantt
-- ✅ **Facturation complète** (devis, factures, avoirs)
-- ✅ **Gestion clients et équipes** avec rôles granulaires
-- ✅ **Authentification sécurisée** (JWT + 2FA optionnel)
-- ✅ **Tableaux de bord** exécutifs avec KPIs et rapports
-- ✅ **Suivi du temps** et allocation de ressources
+-  **Gestion de projets** avec cycles de vie (prospection → livraison → clos)
+-  **Gestion de tâches** avec Kanban interactif et Gantt
+-  **Facturation complète** (devis, factures, avoirs)
+-  **Gestion clients et équipes** avec rôles granulaires
+-  **Authentification sécurisée** (JWT + 2FA optionnel)
+-  **Tableaux de bord** exécutifs avec KPIs et rapports
+-  **Suivi du temps** et allocation de ressources
 
 ### Cas d'usage
-- 🎨 Agences créatives
-- 💼 Cabinets de conseil  
-- 🔧 Sociétés de développement logiciel
-- 📊 Équipes projet de toutes tailles
+-  Agences créatives
+-  Cabinets de conseil  
+-  Sociétés de développement logiciel
+-  Équipes projet de toutes tailles
 
 ---
 
-## ✨ Fonctionnalités
+##  Fonctionnalités
 
-### 🔐 Authentification & Sécurité
+###  Authentification & Sécurité
 - Inscription avec vérification email
 - Connexion sécurisée (JWT + refresh tokens)
 - Réinitialisation mot de passe par email
@@ -49,7 +49,7 @@ NOLYSS est une solution intégrée pour :
 - Protection contre brute force (rate limiting + verrouillage compte)
 - Session automatique avec refresh toutes les 10 minutes
 
-### 📁 Gestion de Projets
+###  Gestion de Projets
 - Création guidée de projets
 - 6 statuts de cycle de vie (prospection → archivé)
 - Budget prévisionnel et suivi
@@ -57,7 +57,7 @@ NOLYSS est une solution intégrée pour :
 - Allocation de ressources par coordinatrice
 - Conversion devis → projet → facture
 
-### ✅ Gestion de Tâches
+### Gestion de Tâches
 - Création de tâches avec priorités et dépendances
 - Attribution à des membres d'équipe
 - Estimation de temps et suivi réel
@@ -65,14 +65,14 @@ NOLYSS est une solution intégrée pour :
 - Sous-tâches et checklists
 - Commentaires et discussions
 
-### 📊 Vues et Visualisations
+###  Vues et Visualisations
 - **Tableau Kanban** : drag & drop interactif
 - **Diagramme de Gantt** : planification temporelle
 - **Vue liste** : tri multi-critères
 - **Vue calendrier** : vue globale des projet
 - **Filtres avancés** : sauvegarde des filtres personnalisés
 
-### 💰 Facturation Complète
+###  Facturation Complète
 - Devis avec modèles
 - Numérotation automatique
 - Calculs automatiques (HT, TVA, TTC)
@@ -82,7 +82,7 @@ NOLYSS est une solution intégrée pour :
 - Gestion des échéances et paiements
 - Export comptable (FEC)
 
-### 👥 Gestion d'Équipe
+###  Gestion d'Équipe
 - 6 rôles spécialisés avec permissions granulaires
 - Admin : gestion complète plateforme
 - Director : validation + rapports
@@ -91,7 +91,7 @@ NOLYSS est une solution intégrée pour :
 - Membre : exécution tâches
 - Client : consultation et validation
 
-### 📈 Rapports & Analytics
+###  Rapports & Analytics
 - Tableau de bord administrateur (paramètres + audit)
 - Tableau de bord exécutif (KPIs + ROI)
 - Rapports financiers (CA, rentabilité, marges)
@@ -99,7 +99,7 @@ NOLYSS est une solution intégrée pour :
 - Portefeuille clients et opportunités
 - Suivi du temps par projet/tâche
 
-### 🔌 Intégrations
+###  Intégrations
 - **Email** : SMTP, Gmail API, Microsoft Outlook
 - **Stockage cloud** : Google Drive, Dropbox, AWS S3 (Cloudinary pour fichiers existant)
 - **Calendrier** : Google Calendar, Outlook Calendar
@@ -110,7 +110,7 @@ NOLYSS est une solution intégrée pour :
 
 ---
 
-## 🛠 Stack Technologique
+##  Stack Technologique
 
 ### Backend
 - **Runtime** : Node.js
@@ -140,7 +140,7 @@ NOLYSS est une solution intégrée pour :
 
 ---
 
-## 📥 Installation
+##  Installation
 
 ### Prérequis
 - Node.js ≥ 16.x
@@ -180,7 +180,7 @@ npm install
 
 ---
 
-## 🚀 Démarrage
+##  Démarrage
 
 ### Démarrage Développement
 
@@ -217,7 +217,7 @@ npm run build
 
 ---
 
-## ⚙️ Configuration
+##  Configuration
 
 ### Variables Backend (.env)
 
@@ -259,7 +259,7 @@ REACT_APP_SOCKET_URL=http://localhost:5000
 
 ---
 
-## 🏗 Architecture
+##  Architecture
 
 ### Structure Backend
 ```
@@ -320,17 +320,17 @@ Voir [FIXES_AND_IMPROVEMENTS.md](FIXES_AND_IMPROVEMENTS.md) pour détails comple
 
 ---
 
-## 📖 Documentation
+##  Documentation
 
 ### Pour les Utilisateurs
-- 📱 [Guide Authentification & Compte](./USER_GUIDE_AUTH.md)
+-  [Guide Authentification & Compte](./USER_GUIDE_AUTH.md)
   - Inscription, connexion
   - Mot de passe oublié
   - 2FA
   - Sécurité des comptes
 
 ### Pour les Développeurs
-- 🔐 [Architecture Sécurité](./SECURITY.md)
+-  [Architecture Sécurité](./SECURITY.md)
   - Authentification & JWT
   - Protection attaques
   - Gestion session
@@ -342,7 +342,7 @@ Voir [FIXES_AND_IMPROVEMENTS.md](FIXES_AND_IMPROVEMENTS.md) pour détails comple
   - Comparaison avant/après
   - Checklist sécurité restante
 
-- 📚 [API Documentation](./API.md) (à venir)
+-  [API Documentation](./API.md) (à venir)
   - Endpoints complets
   - Exemples requêtes/réponses
   - Codes d'erreur
@@ -354,21 +354,21 @@ Voir [FIXES_AND_IMPROVEMENTS.md](FIXES_AND_IMPROVEMENTS.md) pour détails comple
 
 ---
 
-## 🔐 Sécurité
+##  Sécurité
 
-### Implémenté ✅
-- ✅ Authentification JWT avec access/refresh tokens
-- ✅ Chiffrement bcryptjs des mots de passe
-- ✅ Vérification email à l'inscription
-- ✅ Réinitialisation mot de passe sécurisée (1h)
-- ✅ Rate limiting (5 tentatives/15min)
-- ✅ Brute force protection (verrouillage compte)
-- ✅ Session management automatique
-- ✅ Validation input avec Express Validator
-- ✅ CORS configuré
-- ✅ Rôles et permissions granulaires
+### Implémenté 
+-  Authentification JWT avec access/refresh tokens
+-  Chiffrement bcryptjs des mots de passe
+-  Vérification email à l'inscription
+-  Réinitialisation mot de passe sécurisée (1h)
+-  Rate limiting (5 tentatives/15min)
+-  Brute force protection (verrouillage compte)
+-  Session management automatique
+-  Validation input avec Express Validator
+-  CORS configuré
+-  Rôles et permissions granulaires
 
-### Avant Production ⚠️
+### Avant Production 
 - Déployer sur HTTPS/TLS
 - Configurer SMTP pour emails
 - Ajouter Helmet.js pour sécurité headers
@@ -381,7 +381,7 @@ Voir [SECURITY.md](./SECURITY.md) pour détails complets.
 
 ---
 
-## 🤝 Contribution
+##  Contribution
 
 Les contributions sont les bienvenues !
 
@@ -400,13 +400,13 @@ Les contributions sont les bienvenues !
 
 ---
 
-## 📝 License
+##  License
 
 Ce projet est sous licence [MIT](LICENSE).
 
 ---
 
-## 📞 Support
+##  Support
 
 ### Questions?
 - Consultez la [documentation](#documentation)
@@ -421,7 +421,7 @@ Ce projet est sous licence [MIT](LICENSE).
 
 ---
 
-## 🎯 Roadmap
+##  Roadmap
 
 ### V1.1 (Q2 2026)
 - [ ] 2FA avec TOTP (Google Authenticator)
@@ -443,9 +443,9 @@ Ce projet est sous licence [MIT](LICENSE).
 
 ---
 
-## 🎉 Crédits
+## Crédits
 
-Développé avec ❤️ par l'équipe NOLYSS.
+Développé avec  par l'équipe NOLYSS.
 
 **Dépendances** :
 - Express.js
@@ -458,4 +458,4 @@ Développé avec ❤️ par l'équipe NOLYSS.
 
 **Dernière mise à jour** : 14 février 2026  
 **Version** : 1.0.0  
-**Statut** : Production Ready ✅
+**Statut** : Production Ready 
