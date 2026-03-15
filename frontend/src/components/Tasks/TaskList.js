@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import API from '../../utils/api';
 import { Link } from 'react-router-dom';
+import { AuthContext } from '../../contexts/AuthContext';
 import TaskDetailModal from './TaskDetailModal';
 import './TaskList.css';
 
@@ -8,9 +9,24 @@ const STATUS_LABELS = { todo: 'À faire', inProgress: 'En cours', review: 'En re
 const PRIORITY_LABELS = { low: 'Basse', medium: 'Moyenne', high: 'Haute' };
 
 const TaskList = ({ projectId }) => {
+  const { user } = useContext(AuthContext);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [detailTaskId, setDetailTaskId] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const isTeamMember = user?.role === 'teamMember';
+  const canDelete = ['admin', 'director', 'coordinator', 'projectManager'].includes(user?.role);
+  const canCreateTask = !isTeamMember;
+  const isAssignedToMe = (task) => {
+    const uid = (user?._id || user?.id)?.toString();
+    if (!uid) return false;
+    const assignedTo = task.assignedTo || [];
+    return Array.isArray(assignedTo)
+      ? assignedTo.some((a) => (a?._id || a)?.toString() === uid)
+      : (assignedTo?._id || assignedTo)?.toString() === uid;
+  };
+  const canEditTask = (task) => !isTeamMember || isAssignedToMe(task);
 
   const fetchTasks = async () => {
     if (!projectId) return;
@@ -25,6 +41,21 @@ const TaskList = ({ projectId }) => {
     }
   };
 
+  const handleDelete = async (taskIdToDelete) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) return;
+    setDeletingId(taskIdToDelete);
+    try {
+      await API.delete(`/tasks/${taskIdToDelete}`);
+      await fetchTasks();
+      if (detailTaskId === taskIdToDelete) setDetailTaskId(null);
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.message || 'Impossible de supprimer la tâche.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   useEffect(() => {
     if (projectId) fetchTasks();
   }, [projectId]);
@@ -33,14 +64,14 @@ const TaskList = ({ projectId }) => {
     <div className="task-list-block">
       <div className="task-list-header">
         <h3>Tâches</h3>
-        <Link to={`/projects/${projectId}/tasks/new`} className="btn-add-task">Nouvelle tâche</Link>
+        {canCreateTask && <Link to={`/projects/${projectId}/tasks/new`} className="btn-add-task">Nouvelle tâche</Link>}
       </div>
       {loading ? (
         <p className="task-list-empty">Chargement des tâches...</p>
       ) : tasks.length === 0 ? (
         <div className="task-list-empty-state">
           <p className="task-list-empty">Aucune tâche pour ce projet.</p>
-          <Link to={`/projects/${projectId}/tasks/new`} className="btn-add-task task-list-empty-cta">Créer une tâche</Link>
+          {canCreateTask && <Link to={`/projects/${projectId}/tasks/new`} className="btn-add-task task-list-empty-cta">Créer une tâche</Link>}
         </div>
       ) : (
         <div className="task-list-table-wrap">
@@ -69,8 +100,25 @@ const TaskList = ({ projectId }) => {
                   <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('fr-FR') : '–'}</td>
                   <td>
                     <button type="button" className="btn-link" onClick={() => setDetailTaskId(task._id)}>Voir</button>
-                    {' '}
-                    <Link to={`/tasks/edit/${task._id}`}>Modifier</Link>
+                    {canEditTask(task) && (
+                      <>
+                        {' '}
+                        <Link to={`/tasks/edit/${task._id}`}>Modifier</Link>
+                      </>
+                    )}
+                    {canDelete && (
+                      <>
+                        {' '}
+                        <button
+                          type="button"
+                          className="btn-link task-list-delete"
+                          onClick={() => handleDelete(task._id)}
+                          disabled={deletingId === task._id}
+                        >
+                          {deletingId === task._id ? 'Suppression…' : 'Supprimer'}
+                        </button>
+                      </>
+                    )}
                   </td>
                 </tr>
               ))}

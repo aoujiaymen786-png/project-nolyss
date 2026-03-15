@@ -25,6 +25,23 @@ const TaskForm = () => {
   const [project, setProject] = useState(null);
   const [users, setUsers] = useState([]);
 
+  // Construire la liste des utilisateurs assignables : chef de projet + membres de l'équipe du projet
+  const buildAssignableUsersFromProject = (projectData) => {
+    if (!projectData || isTeamMember) return [];
+    const list = [];
+    const seen = new Set();
+    const add = (u) => {
+      if (!u) return;
+      const id = (u._id || u).toString();
+      if (seen.has(id)) return;
+      seen.add(id);
+      list.push(typeof u === 'object' && u.name != null ? u : { _id: id, name: id });
+    };
+    if (projectData.manager) add(projectData.manager);
+    (projectData.team || []).forEach(add);
+    return list;
+  };
+
   useEffect(() => {
     const fetchProject = async () => {
       if (!projectId) {
@@ -37,8 +54,7 @@ const TaskForm = () => {
       const { data } = await API.get(`/projects/${projectId}`);
       setProject(data);
       if (!isTeamMember) {
-        const usersRes = await API.get('/users');
-        setUsers(usersRes.data);
+        setUsers(buildAssignableUsersFromProject(data));
       }
     };
     fetchProject();
@@ -47,7 +63,14 @@ const TaskForm = () => {
       const fetchTask = async () => {
         const { data } = await API.get(`/tasks/${taskId}`);
         if (!projectId && data.project) {
-          setProject(typeof data.project === 'object' ? data.project : null);
+          const proj = typeof data.project === 'object' ? data.project : null;
+          setProject(proj);
+          if (!isTeamMember && proj) {
+            const projectIdFromTask = proj._id || proj;
+            const { data: projectData } = await API.get(`/projects/${projectIdFromTask}`);
+            setProject(projectData);
+            setUsers(buildAssignableUsersFromProject(projectData));
+          }
         }
         setFormData({
           ...data,

@@ -128,3 +128,16 @@
 .task-list-table td .btn-link:hover {
   text-decoration: underline;
 }
+
+.task-list-table td .task-list-delete {
+  color: #b91c1c;
+}
+
+.task-list-table td .task-list-delete:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.task-list-table td .task-list-delete:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}

@@ -2,6 +2,7 @@ const express = require('express');
 const {
   getClientProjects,
   getClientInvoices,
+  getClientInvoiceById,
   getClientQuotes,
   getClientQuoteById,
   clientAcceptRefuseQuote,
@@ -16,6 +17,7 @@ const router = express.Router();
 
 router.get('/projects', protect, clientPortalAccess, getClientProjects);
 router.get('/invoices', protect, clientPortalAccess, getClientInvoices);
+router.get('/invoices/:id', protect, clientPortalAccess, getClientInvoiceById);
 router.get('/quotes', protect, clientPortalAccess, getClientQuotes);
 router.get('/quotes/:id', protect, clientPortalAccess, getClientQuoteById);
 router.patch('/quotes/:id/accept-refuse', protect, clientPortalAccess, clientAcceptRefuseQuote);

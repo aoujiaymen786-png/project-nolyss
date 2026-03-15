@@ -21,6 +21,8 @@ const TaskDetailModal = ({ taskId, onClose, onTaskUpdated }) => {
   const canEdit = ['admin', 'director', 'coordinator', 'projectManager'].includes(user?.role) ||
     (task?.assignedTo || []).some((u) => (u?._id || u)?.toString() === user?._id);
 
+  const canDelete = ['admin', 'director', 'coordinator', 'projectManager'].includes(user?.role);
+
   useEffect(() => {
     if (!taskId) return;
     const fetchTask = async () => {
@@ -142,6 +144,21 @@ const TaskDetailModal = ({ taskId, onClose, onTaskUpdated }) => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) return;
+    setSaving(true);
+    try {
+      await API.delete(`/tasks/${taskId}`);
+      onTaskUpdated?.();
+      onClose();
+    } catch (e) {
+      console.error(e);
+      alert(e.response?.data?.message || 'Impossible de supprimer la tâche.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   if (!taskId) return null;
 
   return (
@@ -239,6 +256,11 @@ const TaskDetailModal = ({ taskId, onClose, onTaskUpdated }) => {
             </div>
             <div className="task-detail-footer">
               <Link to={`/tasks/edit/${taskId}`} className="task-detail-link-edit">Modifier (formulaire complet)</Link>
+              {canDelete && (
+                <button type="button" className="task-detail-btn-delete" onClick={handleDelete} disabled={saving}>
+                  Supprimer la tâche
+                </button>
+              )}
               <button type="button" onClick={onClose}>Fermer</button>
             </div>
           </>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FileText, FolderOpen, Eye, Pencil, Trash2 } from 'lucide-react';
+import { FileText, FolderOpen, Eye, Pencil, Trash2, Mail } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../../utils/api';
 import './Quotes.css';
@@ -11,6 +11,7 @@ const QuoteList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [reminderLoadingId, setReminderLoadingId] = useState(null);
 
   const quoteStatusLabel = {
     draft: 'Brouillon',
@@ -70,13 +71,25 @@ const QuoteList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr ?')) {
-      try {
-        await API.delete(`/quotes/${id}`);
-        fetchQuotes();
-      } catch (error) {
-        console.error('Erreur:', error);
-      }
+    if (!window.confirm('Supprimer ce devis ?')) return;
+    try {
+      await API.delete(`/quotes/${id}`);
+      fetchQuotes();
+    } catch (error) {
+      alert(error.response?.data?.message || 'Erreur lors de la suppression.');
+    }
+  };
+
+  const handleSendReminder = async (id) => {
+    try {
+      setReminderLoadingId(id);
+      await API.post(`/quotes/${id}/send-reminder`);
+      fetchQuotes();
+      alert('Relance envoyée au client.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Impossible d\'envoyer la relance.');
+    } finally {
+      setReminderLoadingId(null);
     }
   };
 
@@ -140,15 +153,31 @@ const QuoteList = () => {
                   {quote.status === 'draft' && (
                     <Link to={`/quotes/${quote._id}/edit`} className="btn-icon" title="Éditer"><Pencil size={16} /></Link>
                   )}
+                  {quote.status === 'sent' && (
+                    <button
+                      type="button"
+                      onClick={() => handleSendReminder(quote._id)}
+                      disabled={reminderLoadingId === quote._id}
+                      className="btn-icon"
+                      title="Envoyer une relance au client"
+                    >
+                      {reminderLoadingId === quote._id ? '…' : <Mail size={16} />}
+                    </button>
+                  )}
                   {quote.status === 'accepted' && (
                     <>
                       <button type="button" onClick={() => handleConvertToInvoice(quote._id)} className="btn-icon" title="Convertir en facture"><FileText size={16} /></button>
                       <button type="button" onClick={() => handleConvertToProject(quote._id)} className="btn-icon" title="Convertir en projet"><FolderOpen size={16} /></button>
                     </>
                   )}
-                  {quote.status === 'draft' && (
-                    <button type="button" onClick={() => handleDelete(quote._id)} className="btn-icon btn-danger" title="Supprimer"><Trash2 size={16} /></button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(quote._id)}
+                    className="btn-icon btn-danger"
+                    title="Supprimer"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </td>
               </tr>
             ))}

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import API from '../../utils/api';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
 import './Dashboard.css';
@@ -37,6 +37,27 @@ const ClientDashboard = () => {
   if (!stats) return <div className="dashboard-error">Erreur lors du chargement</div>;
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)'];
+
+  const PROJECT_STATUS_LABELS = {
+    prospecting: 'Prospection',
+    inProgress: 'En cours',
+    validation: 'Validation',
+    completed: 'Terminé',
+    archived: 'Archivé',
+  };
+
+  const PROJECT_STATUS_CHART_COLORS = {
+    prospecting: '#94a3b8',
+    inProgress: '#0ea5e9',
+    validation: '#8b5cf6',
+    completed: '#22c55e',
+    archived: '#64748b',
+  };
+
+  const projectsByStatusForChart = (stats.projectsByStatus || []).map((s) => ({
+    ...s,
+    label: PROJECT_STATUS_LABELS[s._id] || s._id,
+  }));
 
   const renderChartTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
@@ -104,66 +125,63 @@ const ClientDashboard = () => {
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
           <div className="chart-card">
-            <h3>Statut de Mes Projets</h3>
-            {stats.projectsByStatus && stats.projectsByStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height={340}>
-                <PieChart>
-                  <defs>
-                    <linearGradient id="clientPieGradient" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#22c55e" />
-                      <stop offset="50%" stopColor="#0ea5e9" />
-                      <stop offset="100%" stopColor="#6366f1" />
-                    </linearGradient>
-                  </defs>
-                  <Pie
-                    data={stats.projectsByStatus}
-                    dataKey="count"
-                    nameKey="_id"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={115}
-                    paddingAngle={2}
-                    label
-                    isAnimationActive
-                    animationDuration={900}
-                    activeIndex={activeProjectSlice}
-                    onMouseEnter={(_, index) => setActiveProjectSlice(index)}
-                  >
-                    {stats.projectsByStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill="url(#clientPieGradient)" />
-                    ))}
-                  </Pie>
-                  <Tooltip content={renderChartTooltip} />
-                </PieChart>
-              </ResponsiveContainer>
+            <h3>Statut de mes projets</h3>
+            {projectsByStatusForChart.length > 0 ? (
+              <div className="chart-card-inner">
+                <ResponsiveContainer width="100%" height={340}>
+                  <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                    <Pie
+                      data={projectsByStatusForChart}
+                      dataKey="count"
+                      nameKey="label"
+                      cx="50%"
+                      cy="48%"
+                      innerRadius={64}
+                      outerRadius={100}
+                      paddingAngle={3}
+                      stroke="var(--surface)"
+                      strokeWidth={2}
+                      label={({ label, percent }) => `${label} ${(percent * 100).toFixed(0)} %`}
+                      labelLine={{ stroke: 'var(--text-secondary)', strokeWidth: 1 }}
+                      isAnimationActive
+                      animationDuration={800}
+                      activeIndex={activeProjectSlice}
+                      onMouseEnter={(_, index) => setActiveProjectSlice(index)}
+                    >
+                      {projectsByStatusForChart.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PROJECT_STATUS_CHART_COLORS[entry._id] || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={renderChartTooltip} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 8 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : <p className="chart-empty">Pas de projets</p>}
           </div>
         </div>
         <div key="chart-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
           <div className="chart-card">
-            <h3>Statut des Factures</h3>
+            <h3>Statut des factures</h3>
             {stats.invoicesByStatus && stats.invoicesByStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.invoicesByStatus} barCategoryGap={26} barGap={8}>
-                  <defs>
-                    <linearGradient id="clientBarInvoices" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#fb923c" />
-                      <stop offset="100%" stopColor="#b91c1c" />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="_id" />
-                  <YAxis />
-                  <Tooltip content={renderChartTooltip} />
-                  <Bar
-                    dataKey="count"
-                    fill="url(#clientBarInvoices)"
-                    radius={[10, 10, 0, 0]}
-                    animationDuration={900}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="chart-card-inner">
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={stats.invoicesByStatus} barCategoryGap={20} barGap={8} margin={{ top: 12, right: 20, bottom: 28, left: 12 }}>
+                    <defs>
+                      <linearGradient id="clientBarInvoices" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--primary)" />
+                        <stop offset="100%" stopColor="var(--primary-hover, #c23d14)" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="_id" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} height={40} />
+                    <YAxis width={32} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                    <Tooltip content={renderChartTooltip} />
+                    <Bar dataKey="count" name="Nombre" fill="url(#clientBarInvoices)" radius={[8, 8, 0, 0]} maxBarSize={56} animationDuration={800} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             ) : <p className="chart-empty">Aucune facture</p>}
           </div>
         </div>
@@ -189,7 +207,7 @@ const ClientDashboard = () => {
                 {stats.projects.map((project) => (
                   <tr key={project._id}>
                     <td><strong>{project.name}</strong></td>
-                    <td><span className={`status-${project.status.toLowerCase()}`}>{project.status}</span></td>
+                    <td><span className={`status-${(project.status || '').toLowerCase()}`}>{PROJECT_STATUS_LABELS[project.status] || project.status}</span></td>
                     <td>
                       <div className="progress-bar">
                         <div className="progress-fill" style={{ width: `${project.progressPercentage || 0}%` }}></div>

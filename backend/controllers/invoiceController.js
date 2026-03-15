@@ -151,8 +151,8 @@ const deleteInvoice = async (req, res) => {
     if (!invoice) {
       return res.status(404).json({ message: 'Facture non trouvée' });
     }
-    if (invoice.status !== 'draft') {
-      return res.status(400).json({ message: 'Impossible de supprimer une facture non brouillon' });
+    if (!['draft', 'cancelled'].includes(invoice.status)) {
+      return res.status(400).json({ message: 'Seules les factures en brouillon ou annulées peuvent être supprimées' });
     }
     await invoice.deleteOne();
     res.json({ message: 'Facture supprimée' });

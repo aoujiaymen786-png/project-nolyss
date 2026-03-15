@@ -110,7 +110,9 @@ const getProjects = async (req, res) => {
       .populate('team', 'name email')
       .populate('createdBy', 'name email')
       .lean();
-    res.json(projects);
+    // Anciens projets avec statut "quotation" (devis) : affichés comme "inProgress" (un devis est lié à un projet, ce n'est pas un statut de projet)
+    const normalized = projects.map((p) => (p.status === 'quotation' ? { ...p, status: 'inProgress' } : p));
+    res.json(normalized);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -141,7 +143,9 @@ const getProjectById = async (req, res) => {
       const hasAssignedTask = await Task.exists({ project: project._id, assignedTo: req.user._id });
       if (!inTeam && !hasAssignedTask) return res.status(403).json({ message: 'Accès réservé aux projets auxquels vous êtes affecté' });
     }
-    res.json(project);
+    const out = project.toObject ? project.toObject() : { ...project };
+    if (out.status === 'quotation') out.status = 'inProgress';
+    res.json(out);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -188,6 +192,7 @@ const updateProject = async (req, res) => {
       } else {
         Object.assign(project, sanitizeProjectBody(req.body));
       }
+      if (project.status === 'quotation') project.status = 'inProgress';
       const updatedProject = await project.save();
       const newTeam = (updatedProject.team || []).map((t) => t.toString());
       const addedIds = newTeam.filter((id) => !previousTeam.includes(id));
@@ -233,11 +238,12 @@ const deleteProject = async (req, res) => {
 const getProjectProgress = async (req, res) => {
   try {
     const projectId = req.params.id;
+    const projectIdObj = mongoose.Types.ObjectId.isValid(projectId) ? new mongoose.Types.ObjectId(projectId) : projectId;
     const [project, tasksByStatus, taskHours] = await Promise.all([
       Project.findById(projectId).select('estimatedHours actualHours estimatedBudget actualBudget').lean(),
-      Task.aggregate([{ $match: { project: projectId } }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Task.aggregate([{ $match: { project: projectIdObj } }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
       Task.aggregate([
-        { $match: { project: projectId } },
+        { $match: { project: projectIdObj } },
         { $group: { _id: null, estimated: { $sum: '$estimatedHours' }, actual: { $sum: '$actualHours' } } },
       ]),
     ]);
@@ -258,18 +264,23 @@ const getProjectProgress = async (req, res) => {
       if (!inTeam && !hasAssignedTask) return res.status(403).json({ message: 'Accès réservé aux projets auxquels vous êtes affecté' });
     }
 
-    const hours = taskHours[0] || { estimated: 0, actual: 0 };
-    const totalTasks = tasksByStatus.reduce((acc, x) => acc + x.count, 0);
+    const hours = taskHours[0] || {};
+    const estimatedHours = hours.estimated ?? 0;
+    const actualHours = hours.actual ?? 0;
+    const totalTasks = tasksByStatus.reduce((acc, x) => acc + (x.count || 0), 0);
     const doneCount = tasksByStatus.find((x) => x._id === 'done')?.count || 0;
-    const progressPercent = totalTasks ? Math.round((doneCount / totalTasks) * 100) : 0;
+    // Avancement basé sur les heures (réel/estimé) si des heures sont estimées, sinon sur le nombre de tâches terminées
+    const progressPercent = estimatedHours > 0
+      ? Math.min(100, Math.round((actualHours / estimatedHours) * 100))
+      : (totalTasks ? Math.round((doneCount / totalTasks) * 100) : 0);
     res.json({
       ...project,
       tasksByStatus,
       totalTasks,
       doneCount,
       progressPercent,
-      taskEstimatedHours: hours.estimated,
-      taskActualHours: hours.actual,
+      taskEstimatedHours: estimatedHours,
+      taskActualHours: actualHours,
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

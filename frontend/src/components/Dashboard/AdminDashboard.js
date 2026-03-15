@@ -17,6 +17,37 @@ const ADMIN_WIDGET_LAYOUT = [
   { i: 'chart-4', x: 6, y: 6, w: 6, h: 4 },
 ];
 
+const PROJECT_STATUS_LABELS = {
+  prospecting: 'Prospection',
+  quotation: 'Devis',
+  inProgress: 'En cours',
+  validation: 'Validation',
+  completed: 'Terminé',
+  archived: 'Archivé',
+};
+
+const TASK_STATUS_LABELS = {
+  todo: 'À faire',
+  inProgress: 'En cours',
+  review: 'En revue',
+  done: 'Terminé',
+};
+
+const TASK_PRIORITY_LABELS = {
+  low: 'Basse',
+  medium: 'Moyenne',
+  high: 'Haute',
+};
+
+const ROLE_LABELS = {
+  admin: 'Administrateur',
+  director: 'Directeur',
+  coordinator: 'Coordinateur',
+  projectmanager: 'Chef de projet',
+  teammember: 'Équipe',
+  client: 'Client',
+};
+
 const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
@@ -120,9 +151,9 @@ const AdminDashboard = () => {
                     </linearGradient>
                   </defs>
                   <Pie
-                    data={stats.projects.byStatus}
+                    data={stats.projects.byStatus.map((e) => ({ ...e, label: PROJECT_STATUS_LABELS[e._id] || e._id }))}
                     dataKey="count"
-                    nameKey="_id"
+                    nameKey="label"
                     cx="50%"
                     cy="50%"
                     innerRadius={55}
@@ -135,7 +166,7 @@ const AdminDashboard = () => {
                     onMouseEnter={(_, index) => setActiveProjectStatusIndex(index)}
                   >
                     {stats.projects.byStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill="url(#adminPieGradient)" />
+                      <Cell key={`cell-${index}`} fill={['#f97316', '#ef4444', '#7c3aed', '#0ea5e9', '#22c55e'][index % 5]} />
                     ))}
                   </Pie>
                   <Tooltip content={renderChartTooltip} />
@@ -151,14 +182,14 @@ const AdminDashboard = () => {
             <h3>Statut des Tâches</h3>
             {stats.tasks && stats.tasks.byStatus && stats.tasks.byStatus.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.tasks.byStatus} barCategoryGap={28} barGap={6}>
+                <BarChart data={(stats.tasks.byStatus || []).map((e) => ({ ...e, label: TASK_STATUS_LABELS[e._id] || e._id }))} barCategoryGap={28} barGap={6}>
                   <defs>
                     <linearGradient id="adminBarStatus" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#f97316" />
                       <stop offset="100%" stopColor="#ef4444" />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="_id" />
+                  <XAxis dataKey="label" />
                   <YAxis />
                   <Tooltip content={renderChartTooltip} />
                   <Bar
@@ -178,14 +209,14 @@ const AdminDashboard = () => {
             <h3>Priorité des Tâches</h3>
             {stats.tasks && stats.tasks.byPriority && stats.tasks.byPriority.length > 0 ? (
               <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={stats.tasks.byPriority} barCategoryGap={28} barGap={6}>
+                <BarChart data={(stats.tasks.byPriority || []).map((e) => ({ ...e, label: TASK_PRIORITY_LABELS[e._id] || e._id }))} barCategoryGap={28} barGap={6}>
                   <defs>
                     <linearGradient id="adminBarPriority" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="#22c55e" />
                       <stop offset="100%" stopColor="#16a34a" />
                     </linearGradient>
                   </defs>
-                  <XAxis dataKey="_id" />
+                  <XAxis dataKey="label" />
                   <YAxis />
                   <Tooltip content={renderChartTooltip} />
                   <Bar
@@ -248,7 +279,7 @@ const AdminDashboard = () => {
                   <tr key={u._id}>
                     <td>{u.name}</td>
                     <td>{u.email}</td>
-                    <td><span className={`role-badge role-${u.role.toLowerCase()}`}>{u.role}</span></td>
+                    <td><span className={`role-badge role-${(u.role || '').toLowerCase()}`}>{ROLE_LABELS[(u.role || '').toLowerCase()] || u.role}</span></td>
                     <td><span className={`status-${u.isVerified ? 'verified' : 'pending'}`}>{u.isVerified ? 'Vérifié' : 'En attente'}</span></td>
                     <td>{new Date(u.createdAt).toLocaleDateString('fr-FR')}</td>
                   </tr>
@@ -281,7 +312,7 @@ const AdminDashboard = () => {
                     <td>{p.name}</td>
                     <td>{p.client?.name || 'N/A'}</td>
                     <td>{p.manager?.name || 'N/A'}</td>
-                    <td><span className={`status-${p.status.toLowerCase()}`}>{p.status}</span></td>
+                    <td><span className={`status-${(p.status || '').toLowerCase()}`}>{PROJECT_STATUS_LABELS[p.status] || p.status}</span></td>
                     <td>{p.taskCount || 0}</td>
                     <td>{new Date(p.startDate).toLocaleDateString('fr-FR')}</td>
                   </tr>

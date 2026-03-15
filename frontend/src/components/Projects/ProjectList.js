@@ -6,7 +6,6 @@ import './ProjectList.css';
 
 const STATUS_LABELS = {
   prospecting: 'Prospection',
-  quotation: 'Devis',
   inProgress: 'En cours',
   validation: 'Validation',
   completed: 'Terminé',

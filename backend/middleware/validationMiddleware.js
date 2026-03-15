@@ -67,14 +67,14 @@ const validateClient = [
   handleValidationErrors,
 ];
 
-// Project validation (cycle de vie: prospecting, quotation, inProgress, validation, completed, archived)
+// Project validation (cycle de vie: prospecting, inProgress, validation, completed, archived — les devis sont liés à un projet, pas un statut de projet)
 const validateProject = [
   body('name').notEmpty().withMessage('Le nom du projet est requis').trim(),
   body('client').isMongoId().withMessage('Client invalide'),
   body('type').optional().trim(),
   body('description').optional().trim(),
   body('objectives').optional().trim(),
-  body('status').optional().isIn(['prospecting', 'quotation', 'inProgress', 'validation', 'completed', 'archived']).withMessage('Statut invalide'),
+  body('status').optional().isIn(['prospecting', 'inProgress', 'validation', 'completed', 'archived']).withMessage('Statut invalide'),
   body('estimatedBudget').optional().isFloat({ min: 0 }).withMessage('Budget invalide'),
   body('estimatedHours').optional().isFloat({ min: 0 }).withMessage('Heures invalides'),
   body('startDate').optional().isISO8601().withMessage('Date de début invalide'),

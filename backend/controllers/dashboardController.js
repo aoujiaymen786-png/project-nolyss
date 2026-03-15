@@ -258,7 +258,7 @@ const getCoordinatorDashboard = async (req, res) => {
         .lean(),
     ]);
 
-    const activeStatuses = ['prospecting', 'quotation', 'inProgress', 'validation'];
+    const activeStatuses = ['prospecting', 'inProgress', 'validation'];
     const activeProjects = projects.filter((p) => activeStatuses.includes(p.status));
     const overdueProjects = activeProjects.filter((p) => p.deadline && new Date(p.deadline) < now);
     const nearDeadlineProjects = activeProjects.filter((p) => {
@@ -478,7 +478,7 @@ const getManagerStats = async (req, res) => {
 
     const myProjects = await Project.find({ manager: managerId }).select('name status startDate endDate deadline client').populate('client', 'name').lean();
 
-    const activeStatuses = ['prospecting', 'quotation', 'inProgress', 'validation'];
+    const activeStatuses = ['prospecting', 'inProgress', 'validation'];
     const activeProjectsCount = myProjects.filter((p) => activeStatuses.includes(p.status)).length;
     const overdueProjectsCount = myProjects.filter((p) => p.deadline && new Date(p.deadline) < now && activeStatuses.includes(p.status)).length;
 
@@ -491,7 +491,6 @@ const getManagerStats = async (req, res) => {
     ]);
     const totalTasks = progressAgg[0]?.total || 0;
     const doneTasks = progressAgg[0]?.done || 0;
-    const globalProgressPercent = totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0;
     const completedTasksCount = doneTasks;
     const overdueTasksCount = await Task.countDocuments({
       project: { $in: myProjectIds },
@@ -505,6 +504,10 @@ const getManagerStats = async (req, res) => {
     ]);
     const timeEstimated = timeAgg[0]?.estimated || 0;
     const timeConsumed = timeAgg[0]?.consumed || 0;
+    // Avancement global : basé sur les heures (consommé/estimé) si des heures sont estimées, sinon sur les tâches terminées
+    const globalProgressPercent = timeEstimated > 0
+      ? Math.min(100, Math.round((timeConsumed / timeEstimated) * 100))
+      : (totalTasks ? Math.round((doneTasks / totalTasks) * 100) : 0);
 
     const tasksByStatus = await Task.aggregate([
       { $match: { project: { $in: myProjectIds } } },
@@ -525,19 +528,35 @@ const getManagerStats = async (req, res) => {
       { $match: { project: { $in: myProjectIds } } },
       { $group: { _id: '$project', total: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ]);
-    const progressMap = {};
+    const progressMapByTasks = {};
     progressByProject.forEach((p) => {
-      progressMap[p._id.toString()] = p.total ? Math.round((p.done / p.total) * 100) : 0;
+      progressMapByTasks[p._id.toString()] = p.total ? Math.round((p.done / p.total) * 100) : 0;
     });
+
+    const hoursByProject = await Task.aggregate([
+      { $match: { project: { $in: myProjectIds } } },
+      { $group: { _id: '$project', estimated: { $sum: { $ifNull: ['$estimatedHours', 0] } }, actual: { $sum: { $ifNull: ['$actualHours', 0] } } } }
+    ]);
+    const hoursMap = {};
+    hoursByProject.forEach((p) => {
+      hoursMap[p._id.toString()] = { estimated: p.estimated ?? 0, actual: p.actual ?? 0 };
+    });
+
     const taskCountByProject = await Task.aggregate([
       { $match: { project: { $in: myProjectIds } } },
       { $group: { _id: '$project', count: { $sum: 1 } } }
     ]);
     const taskCountMap = {};
     taskCountByProject.forEach((p) => { taskCountMap[p._id.toString()] = p.count; });
+
     myProjects.forEach((p) => {
-      p.progressPercentage = progressMap[p._id.toString()] ?? 0;
-      p.taskCount = taskCountMap[p._id.toString()] ?? 0;
+      const pid = p._id.toString();
+      const hours = hoursMap[pid] || { estimated: 0, actual: 0 };
+      const taskBasedPercent = progressMapByTasks[pid] ?? 0;
+      p.progressPercentage = hours.estimated > 0
+        ? Math.min(100, Math.round((hours.actual / hours.estimated) * 100))
+        : taskBasedPercent;
+      p.taskCount = taskCountMap[pid] ?? 0;
     });
 
     const projectTimeline = myProjects.slice(0, 7).map((p) => ({
@@ -585,23 +604,24 @@ const getManagerStats = async (req, res) => {
       assignedTo: (t.assignedTo || []).map((a) => a.name).filter(Boolean),
     }));
 
-    const tasksWithComments = await Task.find(
-      { project: { $in: myProjectIds }, 'comments.0': { $exists: true } },
-      { title: 1, comments: { $slice: -5 } }
-    )
-      .populate('comments.user', 'name')
-      .populate('project', 'name')
-      .lean();
-    const recentComments = tasksWithComments
-      .flatMap((t) => (t.comments || []).map((c) => ({
-        taskTitle: t.title,
-        projectName: t.project?.name,
-        author: c.user?.name,
-        text: c.text,
-        createdAt: c.createdAt
-      })))
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 15);
+    const recentCommentsAgg = await Task.aggregate([
+      { $match: { project: { $in: myProjectIds }, 'comments.0': { $exists: true } } },
+      { $unwind: '$comments' },
+      { $sort: { 'comments.createdAt': -1 } },
+      { $limit: 15 },
+      { $lookup: { from: 'projects', localField: 'project', foreignField: '_id', as: 'proj', pipeline: [{ $project: { name: 1 } }] } },
+      { $unwind: { path: '$proj', preserveNullAndEmptyArrays: true } },
+      { $lookup: { from: 'users', localField: 'comments.user', foreignField: '_id', as: 'commentUser', pipeline: [{ $project: { name: 1 } }] } },
+      { $unwind: { path: '$commentUser', preserveNullAndEmptyArrays: true } },
+      { $project: { taskTitle: '$title', projectName: '$proj.name', text: '$comments.text', author: '$commentUser.name', createdAt: '$comments.createdAt' } },
+    ]);
+    const recentComments = recentCommentsAgg.map((c) => ({
+      taskTitle: c.taskTitle,
+      projectName: c.projectName,
+      author: c.author,
+      text: c.text,
+      createdAt: c.createdAt,
+    }));
 
     const in14Days = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000);
     const upcomingDeadlines = await Task.find({
@@ -717,27 +737,26 @@ const getTeamMemberStats = async (req, res) => {
       .limit(20)
       .lean();
 
-    const collaborationFeed = await Task.find(
-      { ...projectFilter, 'comments.0': { $exists: true } },
-      { title: 1, comments: { $slice: -3 }, project: 1 }
-    )
-      .populate('project', 'name')
-      .populate('comments.user', 'name')
-      .sort({ updatedAt: -1 })
-      .limit(20)
-      .lean();
-    const recentComments = collaborationFeed
-      .flatMap((t) =>
-        (t.comments || []).map((c) => ({
-          taskTitle: t.title,
-          projectName: t.project?.name,
-          text: c.text,
-          author: c.user?.name,
-          createdAt: c.createdAt,
-        }))
-      )
-      .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))
-      .slice(0, 12);
+    const recentCommentsAgg = memberProjectIds.length
+      ? await Task.aggregate([
+          { $match: { project: { $in: memberProjectIds }, 'comments.0': { $exists: true } } },
+          { $unwind: '$comments' },
+          { $sort: { 'comments.createdAt': -1 } },
+          { $limit: 12 },
+          { $lookup: { from: 'projects', localField: 'project', foreignField: '_id', as: 'proj', pipeline: [{ $project: { name: 1 } }] } },
+          { $unwind: { path: '$proj', preserveNullAndEmptyArrays: true } },
+          { $lookup: { from: 'users', localField: 'comments.user', foreignField: '_id', as: 'commentUser', pipeline: [{ $project: { name: 1 } }] } },
+          { $unwind: { path: '$commentUser', preserveNullAndEmptyArrays: true } },
+          { $project: { taskTitle: '$title', projectName: '$proj.name', text: '$comments.text', author: '$commentUser.name', createdAt: '$comments.createdAt' } },
+        ])
+      : [];
+    const recentComments = recentCommentsAgg.map((c) => ({
+      taskTitle: c.taskTitle,
+      projectName: c.projectName,
+      text: c.text,
+      author: c.author,
+      createdAt: c.createdAt,
+    }));
 
     const notifications = [
       ...overdueTasks.slice(0, 8).map((t) => ({
@@ -805,12 +824,25 @@ const getClientStats = async (req, res) => {
       { $match: { project: { $in: projectIds } } },
       { $group: { _id: '$project', total: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ]);
-    const progressByProject = {};
+    const progressByProjectTasks = {};
     progressAgg.forEach((p) => {
-      progressByProject[p._id.toString()] = p.total ? Math.round((p.done / p.total) * 100) : 0;
+      progressByProjectTasks[p._id.toString()] = p.total ? Math.round((p.done / p.total) * 100) : 0;
+    });
+    const hoursByProject = await Task.aggregate([
+      { $match: { project: { $in: projectIds } } },
+      { $group: { _id: '$project', estimated: { $sum: { $ifNull: ['$estimatedHours', 0] } }, actual: { $sum: { $ifNull: ['$actualHours', 0] } } } }
+    ]);
+    const hoursMap = {};
+    hoursByProject.forEach((p) => {
+      hoursMap[p._id.toString()] = { estimated: p.estimated ?? 0, actual: p.actual ?? 0 };
     });
     projects.forEach((p) => {
-      p.progressPercentage = progressByProject[p._id.toString()] ?? 0;
+      const pid = p._id.toString();
+      const hours = hoursMap[pid] || { estimated: 0, actual: 0 };
+      const taskBased = progressByProjectTasks[pid] ?? 0;
+      p.progressPercentage = hours.estimated > 0
+        ? Math.min(100, Math.round((hours.actual / hours.estimated) * 100))
+        : taskBased;
     });
 
     const invoices = await Invoice.find({ client: clientId }).select('number date dueDate totalTTC status project').populate('project', 'name').lean();

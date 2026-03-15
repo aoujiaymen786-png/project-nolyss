@@ -5,6 +5,7 @@ const {
   getQuoteById,
   updateQuote,
   deleteQuote,
+  sendQuoteReminder,
   convertQuoteToInvoice,
   convertQuoteToProject,
   validateQuote,
@@ -29,6 +30,7 @@ router.route('/:id')
   .put(protect, authorize('UPDATE_QUOTE'), updateQuote)
   .delete(protect, authorize('DELETE_QUOTE'), deleteQuote);
 
+router.post('/:id/send-reminder', protect, sendQuoteReminder);
 router.post('/:id/convert', protect, authorize('CONVERT_QUOTE'), convertQuoteToInvoice);
 router.post('/:id/convert-to-project', protect, convertQuoteToProject);
 router.patch('/:id/validate', protect, authorize('VALIDATE_QUOTE'), validateQuote);

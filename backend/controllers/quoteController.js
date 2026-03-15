@@ -1,6 +1,7 @@
 const Quote = require('../models/Quote');
 const QuoteTemplate = require('../models/QuoteTemplate');
 const mongoose = require('mongoose');
+const nodemailer = require('nodemailer');
 const SystemSettings = require('../models/SystemSettings');
 
 const generateQuoteNumber = async (customPrefix) => {
@@ -98,11 +99,58 @@ const deleteQuote = async (req, res) => {
     if (!quote) {
       return res.status(404).json({ message: 'Devis non trouvé' });
     }
-    if (quote.status !== 'draft') {
-      return res.status(400).json({ message: 'Impossible de supprimer un devis non brouillon' });
-    }
     await quote.deleteOne();
     res.json({ message: 'Devis supprimé' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Relance devis : envoi d'un email de rappel au client (devis envoyé, en attente de réponse)
+const sendQuoteReminder = async (req, res) => {
+  try {
+    const quote = await Quote.findById(req.params.id).populate('client', 'name email contacts');
+    if (!quote) return res.status(404).json({ message: 'Devis non trouvé' });
+    if (quote.status !== 'sent') {
+      return res.status(400).json({ message: 'Seul un devis envoyé peut faire l\'objet d\'une relance' });
+    }
+
+    const client = quote.client;
+    if (!client) return res.status(400).json({ message: 'Client inconnu' });
+    let toEmail = client.email;
+    if (!toEmail && client.contacts?.length) {
+      const primary = client.contacts.find((c) => c.isPrimary && c.email);
+      toEmail = primary?.email || client.contacts.find((c) => c.email)?.email;
+    }
+    if (!toEmail) return res.status(400).json({ message: 'Aucune adresse e-mail pour ce client' });
+
+    if (process.env.EMAIL_HOST && process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      const transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT || 587,
+        secure: false,
+        auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
+      });
+      const validStr = quote.validUntil ? new Date(quote.validUntil).toLocaleDateString('fr-FR') : '';
+      await transporter.sendMail({
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: toEmail,
+        subject: `Rappel : devis ${quote.number} en attente de votre réponse`,
+        html: `
+          <p>Bonjour,</p>
+          <p>Nous vous rappelons que le devis <strong>${quote.number}</strong> (${client.name}) d'un montant de <strong>${(quote.totalTTC || 0).toFixed(2)} TND</strong> est en attente de votre réponse.</p>
+          ${validStr ? `<p>Validité du devis : jusqu'au ${validStr}.</p>` : ''}
+          <p>N'hésitez pas à nous contacter pour toute question.</p>
+          <p>Cordialement,<br/>L'équipe</p>
+        `,
+      });
+    }
+
+    quote.remindersSent = (quote.remindersSent || 0) + 1;
+    quote.lastReminderAt = new Date();
+    await quote.save();
+
+    res.json({ message: 'Relance envoyée au client', remindersSent: quote.remindersSent });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -179,7 +227,7 @@ const convertQuoteToProject = async (req, res) => {
     const project = new Project({
       name: `Projet - ${quote.client?.name || 'Client'} - ${quote.number}`,
       client: quote.client._id,
-      status: 'quotation',
+      status: 'inProgress',
       description: quote.notes || '',
       estimatedBudget: quote.totalTTC || quote.subtotalHT,
       manager: req.user._id,
@@ -223,6 +271,7 @@ module.exports = {
   getQuoteById,
   updateQuote,
   deleteQuote,
+  sendQuoteReminder,
   convertQuoteToInvoice,
   convertQuoteToProject,
   validateQuote,

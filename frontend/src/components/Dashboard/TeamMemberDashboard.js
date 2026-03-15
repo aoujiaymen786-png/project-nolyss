@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom';
 import API from '../../utils/api';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
-import { MessageSquare } from 'lucide-react';
 import './Dashboard.css';
 
 const TEAM_MEMBER_WIDGET_LAYOUT = [
@@ -16,15 +15,14 @@ const TEAM_MEMBER_WIDGET_LAYOUT = [
 const TIMER_STORAGE_KEY = 'team-member-task-timers';
 
 const TASK_STATUS_LABELS = {
-  todo: 'A faire',
+  todo: 'À faire',
   inProgress: 'En cours',
-  review: 'En review',
-  done: 'Termine',
+  review: 'En revue',
+  done: 'Terminé',
 };
 
 const PROJECT_STATUS_LABELS = {
   prospecting: 'Prospection',
-  quotation: 'Devis',
   inProgress: 'En cours',
   validation: 'Validation',
   completed: 'Termine',
@@ -88,7 +86,7 @@ const TeamMemberDashboard = () => {
   if (loading) return <div className="dashboard-loading">Chargement...</div>;
   if (!data) return <div className="dashboard-error">{error || 'Erreur lors du chargement'}</div>;
 
-  const { myTasksInProgress, overdueTasks, assignedProjects, timeWorked, upcomingDeadlines, notifications, timeHistory, recentComments } = data;
+  const { myTasksInProgress, overdueTasks, assignedProjects, timeWorked, upcomingDeadlines, notifications, timeHistory } = data;
 
   const updateTaskDraft = (taskId, field, value) => {
     setTaskDrafts((prev) => ({
@@ -224,10 +222,10 @@ const TeamMemberDashboard = () => {
                         value={taskDrafts[task._id]?.status || task.status}
                         onChange={(e) => updateTaskDraft(task._id, 'status', e.target.value)}
                       >
-                        <option value="todo">A faire</option>
+                        <option value="todo">À faire</option>
                         <option value="inProgress">En cours</option>
-                        <option value="review">En review</option>
-                        <option value="done">Termine</option>
+                        <option value="review">En revue</option>
+                        <option value="done">Terminé</option>
                       </select>
                     </td>
                     <td><span className={`priority-${(task.priority || 'medium').toLowerCase()}`}>{PRIORITY_LABELS[task.priority] || task.priority}</span></td>
@@ -411,22 +409,6 @@ const TeamMemberDashboard = () => {
           </div>
         ) : (
           <p className="muted">Aucun historique de temps pour le moment</p>
-        )}
-      </div>
-
-      <div className="table-section">
-        <h3 className="section-title-with-icon"><MessageSquare size={18} /> Collaboration (commentaires récents)</h3>
-        {recentComments?.length > 0 ? (
-          <ul className="notifications-list">
-            {recentComments.map((c, idx) => (
-              <li key={idx}>
-                <strong>{c.projectName || 'Projet'}</strong> — {c.taskTitle}: {c.text}
-                {c.author ? <span className="comment-meta"> — {c.author}</span> : null}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="muted">Aucun commentaire récent</p>
         )}
       </div>
 

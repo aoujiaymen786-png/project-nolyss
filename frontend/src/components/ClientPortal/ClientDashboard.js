@@ -3,11 +3,12 @@ import { toast } from 'react-toastify';
 import API from '../../utils/api';
 import KpiIcon from '../UI/KpiIcon';
 import PaymentModal from './PaymentModal';
+import QuoteDetailModal from './QuoteDetailModal';
+import InvoiceDetailModal from './InvoiceDetailModal';
 import '../Dashboard/Dashboard.css';
 
 const PROJECT_STATUS_LABELS = {
   prospecting: 'Prospection',
-  quotation: 'Devis',
   inProgress: 'En cours',
   validation: 'Validation',
   completed: 'Termine',
@@ -53,6 +54,8 @@ const ClientDashboard = () => {
   const [error, setError] = useState('');
   const [actionLoadingId, setActionLoadingId] = useState('');
   const [selectedInvoice, setSelectedInvoice] = useState(null);
+  const [viewQuoteId, setViewQuoteId] = useState(null);
+  const [viewInvoiceId, setViewInvoiceId] = useState(null);
   const [showClaimForm, setShowClaimForm] = useState(false);
   const [claimForm, setClaimForm] = useState({ type: 'project_delay', subject: '', message: '', projectId: '', invoiceId: '' });
   const [claimSubmitting, setClaimSubmitting] = useState(false);
@@ -204,27 +207,41 @@ const ClientDashboard = () => {
       </div>
 
       <div className="table-section">
-        <h3>Devis</h3>
+        <h3>Mes devis</h3>
+        <p className="muted">Devis liés à vos projets, au même titre que les factures. Vous pouvez les consulter et valider ou refuser ceux en attente.</p>
         {quotes.length > 0 ? (
           <div className="table-container">
             <table className="admin-table">
               <thead>
-                <tr><th>Numero</th><th>Date</th><th>Montant</th><th>Statut</th><th>Action</th></tr>
+                <tr>
+                  <th>Numéro</th>
+                  <th>Projet</th>
+                  <th>Date</th>
+                  <th>Validité</th>
+                  <th>Montant</th>
+                  <th>Statut</th>
+                  <th>Action</th>
+                </tr>
               </thead>
               <tbody>
                 {quotes.map((q) => (
                   <tr key={q._id}>
-                    <td>{q.number}</td>
+                    <td><strong>{q.number}</strong></td>
+                    <td>{q.project?.name || '—'}</td>
                     <td>{q.date ? new Date(q.date).toLocaleDateString('fr-FR') : '—'}</td>
+                    <td>{q.validUntil ? new Date(q.validUntil).toLocaleDateString('fr-FR') : '—'}</td>
                     <td>{(q.totalTTC || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
                     <td><span className={`status-${(q.status || '').toLowerCase()}`}>{QUOTE_STATUS_LABELS[q.status] || q.status}</span></td>
                     <td>
-                      {q.status === 'sent' ? (
+                      <button type="button" className="btn btn-sm btn-outline" onClick={() => setViewQuoteId(q._id)}>Consulter</button>
+                      {q.status === 'sent' && (
                         <>
-                          <button type="button" disabled={actionLoadingId === q._id} className="btn btn-sm btn-success" onClick={() => handleQuoteDecision(q._id, 'accept')}>Valider</button>{' '}
+                          {' '}
+                          <button type="button" disabled={actionLoadingId === q._id} className="btn btn-sm btn-success" onClick={() => handleQuoteDecision(q._id, 'accept')}>Valider</button>
+                          {' '}
                           <button type="button" disabled={actionLoadingId === q._id} className="btn btn-sm btn-danger" onClick={() => handleQuoteDecision(q._id, 'refuse')}>Refuser</button>
                         </>
-                      ) : '—'}
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -348,11 +365,20 @@ const ClientDashboard = () => {
 
       <div className="table-section">
         <h3>Mes factures</h3>
+        <p className="muted">Factures liées à vos projets. Vous pouvez consulter les montants et régler celles en attente.</p>
         {invoices.length > 0 ? (
           <div className="table-container">
             <table className="admin-table">
               <thead>
-                <tr><th>Numero</th><th>Date</th><th>Echeance</th><th>Montant</th><th>Statut</th><th>Action</th></tr>
+                <tr>
+                  <th>Numéro</th>
+                  <th>Projet</th>
+                  <th>Date</th>
+                  <th>Échéance</th>
+                  <th>Montant</th>
+                  <th>Statut</th>
+                  <th>Action</th>
+                </tr>
               </thead>
               <tbody>
                 {invoices.map((i) => {
@@ -360,21 +386,26 @@ const ClientDashboard = () => {
                   const canPay = ['sent', 'overdue'].includes(i.status) && remaining > 0.01;
                   return (
                     <tr key={i._id}>
-                      <td>{i.number}</td>
+                      <td><strong>{i.number}</strong></td>
+                      <td>{i.project?.name || '—'}</td>
                       <td>{i.date ? new Date(i.date).toLocaleDateString('fr-FR') : '—'}</td>
                       <td>{i.dueDate ? new Date(i.dueDate).toLocaleDateString('fr-FR') : '—'}</td>
                       <td>{(i.totalTTC || 0).toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
                       <td><span className={`status-${(i.status || '').toLowerCase()}`}>{INVOICE_STATUS_LABELS[i.status] || i.status}</span></td>
                       <td>
-                        {canPay ? (
-                          <button
-                            type="button"
-                            className="btn btn-sm btn-primary"
-                            onClick={() => openPaymentModal(i)}
-                          >
-                            Payer
-                          </button>
-                        ) : '—'}
+                        <button type="button" className="btn btn-sm btn-outline" onClick={() => setViewInvoiceId(i._id)}>Consulter</button>
+                        {canPay && (
+                          <>
+                            {' '}
+                            <button
+                              type="button"
+                              className="btn btn-sm btn-primary"
+                              onClick={() => openPaymentModal(i)}
+                            >
+                              Payer
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   );
@@ -385,6 +416,20 @@ const ClientDashboard = () => {
         ) : <p>Aucune facture.</p>}
       </div>
 
+      {viewQuoteId && (
+        <QuoteDetailModal
+          quoteId={viewQuoteId}
+          onClose={() => setViewQuoteId(null)}
+          onValidated={fetchData}
+        />
+      )}
+      {viewInvoiceId && (
+        <InvoiceDetailModal
+          invoiceId={viewInvoiceId}
+          onClose={() => setViewInvoiceId(null)}
+          onPay={(inv) => { setViewInvoiceId(null); setSelectedInvoice(inv); }}
+        />
+      )}
       {selectedInvoice && (
         <PaymentModal
           invoice={selectedInvoice}

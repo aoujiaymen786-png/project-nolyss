@@ -41,6 +41,18 @@
   box-shadow: 0 6px 20px rgba(232, 93, 4, 0.3);
 }
 
+.invoice-form-container .form-alert {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.25rem;
+  font-size: 0.9rem;
+}
+.invoice-form-container .form-alert-info {
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: var(--text-primary);
+}
+
 /* Toolbar / Filtres (comme project-list-toolbar) */
 .invoices-toolbar {
   display: flex;

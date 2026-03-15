@@ -94,16 +94,16 @@ function App() {
             <Route path="/clients/:id" element={<PrivateLayout><ClientDetail /></PrivateLayout>} />
             
             <Route path="/projects" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><ProjectList /></PrivateLayout></RoleRoute>} />
-            <Route path="/projects/new" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager']}><PrivateLayout><ProjectFormWizard /></PrivateLayout></RoleRoute>} />
-            <Route path="/projects/edit/:id" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager']}><PrivateLayout><ProjectFormWizard /></PrivateLayout></RoleRoute>} />
+            <Route path="/projects/new" element={<RoleRoute allowedRoles={['coordinator', 'projectManager']}><PrivateLayout><ProjectFormWizard /></PrivateLayout></RoleRoute>} />
+            <Route path="/projects/edit/:id" element={<RoleRoute allowedRoles={['coordinator', 'projectManager']}><PrivateLayout><ProjectFormWizard /></PrivateLayout></RoleRoute>} />
             <Route path="/projects/:id" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><ProjectDetails /></PrivateLayout></RoleRoute>} />
-            <Route path="/projects/:id/collaboration" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><ProjectDetails /></PrivateLayout></RoleRoute>} />
+            <Route path="/projects/:id/collaboration" element={<RoleRoute allowedRoles={['coordinator', 'projectManager', 'teamMember']}><PrivateLayout><ProjectDetails /></PrivateLayout></RoleRoute>} />
             
-            <Route path="/projects/:projectId/tasks/new" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><TaskForm /></PrivateLayout></RoleRoute>} />
-            <Route path="/tasks/edit/:taskId" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><TaskForm /></PrivateLayout></RoleRoute>} />
-            <Route path="/kanban" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><KanbanBoard /></PrivateLayout></RoleRoute>} />
-            <Route path="/projects/:projectId/kanban" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><KanbanBoard /></PrivateLayout></RoleRoute>} />
-            <Route path="/projects/:projectId/gantt" element={<RoleRoute allowedRoles={['director', 'coordinator', 'projectManager', 'teamMember']}><PrivateLayout><GanttChart /></PrivateLayout></RoleRoute>} />
+            <Route path="/projects/:projectId/tasks/new" element={<RoleRoute allowedRoles={['coordinator', 'projectManager']}><PrivateLayout><TaskForm /></PrivateLayout></RoleRoute>} />
+            <Route path="/tasks/edit/:taskId" element={<RoleRoute allowedRoles={['coordinator', 'projectManager', 'teamMember']}><PrivateLayout><TaskForm /></PrivateLayout></RoleRoute>} />
+            <Route path="/kanban" element={<RoleRoute allowedRoles={['coordinator', 'projectManager', 'teamMember']}><PrivateLayout><KanbanBoard /></PrivateLayout></RoleRoute>} />
+            <Route path="/projects/:projectId/kanban" element={<RoleRoute allowedRoles={['coordinator', 'projectManager', 'teamMember']}><PrivateLayout><KanbanBoard /></PrivateLayout></RoleRoute>} />
+            <Route path="/projects/:projectId/gantt" element={<RoleRoute allowedRoles={['coordinator', 'projectManager', 'teamMember']}><PrivateLayout><GanttChart /></PrivateLayout></RoleRoute>} />
             
             <Route path="/invoices" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><InvoiceList /></PrivateLayout></RoleRoute>} />
             <Route path="/invoices/new" element={<RoleRoute allowedRoles={['director']}><PrivateLayout><InvoiceForm /></PrivateLayout></RoleRoute>} />

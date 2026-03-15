@@ -113,8 +113,15 @@ const QuoteForm = () => {
     return { subtotal: acc.subtotal + net, tax: acc.tax + tva };
   }, { subtotal: 0, tax: 0 });
 
+  const canEditQuote = !id || formData.status === 'draft';
+  const statusLabel = { draft: 'Brouillon', sent: 'Envoyé', accepted: 'Accepté', refused: 'Refusé', converted: 'Converti' }[formData.status] || formData.status;
+
   const handleSubmit = async (e, saveAs = 'draft') => {
     e.preventDefault();
+    if (!canEditQuote) {
+      alert('Aucune modification possible : ce devis n\'est plus en brouillon (statut actuel : ' + (statusLabel || formData.status) + ').');
+      return;
+    }
     setLoading(true);
     try {
       const payload = { ...formData, status: saveAs };
@@ -123,6 +130,7 @@ const QuoteForm = () => {
       } else {
         await API.post('/quotes', payload);
       }
+      alert('Devis enregistré.');
       navigate('/quotes');
     } catch (error) {
       console.error('Erreur:', error);
@@ -136,15 +144,20 @@ const QuoteForm = () => {
     <div className="quote-form-container">
       <h1>{id ? 'Éditer le Devis' : 'Nouveau Devis'}</h1>
       <p className="form-intro">Le devis est une proposition commerciale envoyée au client avant tout engagement. Il peut être accepté, refusé ou converti en facture/projet.</p>
+      {id && !canEditQuote && (
+        <div className="form-alert form-alert-info" role="alert">
+          Ce devis ne peut plus être modifié (statut : <strong>{statusLabel}</strong>). Vous pouvez uniquement le consulter.
+        </div>
+      )}
 
-      <form onSubmit={(e) => handleSubmit(e, formData.status)}>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e, formData.status); }}>
         <div className="form-section">
           <h3>Informations du Devis</h3>
           <div className="form-grid">
             {templates.length > 0 && !id && (
               <div className="form-group form-group-full">
                 <label>Modèle de devis</label>
-                <select onChange={(e) => applyTemplate(e.target.value)}>
+                <select onChange={(e) => applyTemplate(e.target.value)} disabled={!canEditQuote}>
                   <option value="">-- Créer à partir d'un modèle --</option>
                   {templates.map(t => (
                     <option key={t._id} value={t._id}>{t.name}</option>
@@ -154,7 +167,7 @@ const QuoteForm = () => {
             )}
             <div className="form-group">
               <label>Client </label>
-              <select name="client" value={formData.client} onChange={handleChange} required>
+              <select name="client" value={formData.client} onChange={handleChange} required disabled={!canEditQuote}>
                 <option value="">-- Sélectionner --</option>
                 {clients.map(c => (
                   <option key={c._id} value={c._id}>{c.name}</option>
@@ -163,7 +176,7 @@ const QuoteForm = () => {
             </div>
             <div className="form-group">
               <label>Projet</label>
-              <select name="project" value={formData.project} onChange={handleChange}>
+              <select name="project" value={formData.project} onChange={handleChange} disabled={!canEditQuote}>
                 <option value="">-- Optionnel --</option>
                 {projects.map(p => (
                   <option key={p._id} value={p._id}>{p.name}</option>
@@ -172,15 +185,15 @@ const QuoteForm = () => {
             </div>
             <div className="form-group">
               <label>Date</label>
-              <input type="date" name="date" value={formData.date} onChange={handleChange} />
+              <input type="date" name="date" value={formData.date} onChange={handleChange} disabled={!canEditQuote} />
             </div>
             <div className="form-group">
               <label>Valide jusqu'au</label>
-              <input type="date" name="validUntil" value={formData.validUntil} onChange={handleChange} />
+              <input type="date" name="validUntil" value={formData.validUntil} onChange={handleChange} disabled={!canEditQuote} />
             </div>
             <div className="form-group">
               <label>Statut</label>
-              <select name="status" value={formData.status} onChange={handleChange}>
+              <select name="status" value={formData.status} onChange={handleChange} disabled={!canEditQuote}>
                 <option value="draft">Brouillon</option>
                 <option value="sent">Envoyé</option>
                 <option value="accepted">Accepté</option>
@@ -215,6 +228,7 @@ const QuoteForm = () => {
                     placeholder="Description"
                     value={line.description}
                     onChange={(e) => handleLineChange(index, 'description', e.target.value)}
+                    disabled={!canEditQuote}
                   />
                   <input
                     type="number"
@@ -223,6 +237,7 @@ const QuoteForm = () => {
                     onChange={(e) => handleLineChange(index, 'quantity', parseFloat(e.target.value) || 0)}
                     min="0.001"
                     step="0.01"
+                    disabled={!canEditQuote}
                   />
                   <input
                     type="number"
@@ -231,6 +246,7 @@ const QuoteForm = () => {
                     onChange={(e) => handleLineChange(index, 'unitPrice', parseFloat(e.target.value) || 0)}
                     min="0"
                     step="0.01"
+                    disabled={!canEditQuote}
                   />
                   <input
                     type="number"
@@ -239,6 +255,7 @@ const QuoteForm = () => {
                     onChange={(e) => handleLineChange(index, 'taxRate', parseFloat(e.target.value) || 0)}
                     min="0"
                     step="0.01"
+                    disabled={!canEditQuote}
                   />
                   <input
                     type="number"
@@ -247,23 +264,25 @@ const QuoteForm = () => {
                     onChange={(e) => handleLineChange(index, 'discount', parseFloat(e.target.value) || 0)}
                     min="0"
                     step="0.01"
+                    disabled={!canEditQuote}
                   />
                   <select
                     value={line.discountType}
                     onChange={(e) => handleLineChange(index, 'discountType', e.target.value)}
+                    disabled={!canEditQuote}
                   >
                     <option value="percent">%</option>
                     <option value="amount">TND</option>
                   </select>
                   <div className="item-total">{ttc.toFixed(2)} TND</div>
-                  {formData.lines.length > 1 && (
+                  {canEditQuote && formData.lines.length > 1 && (
                     <button type="button" onClick={() => removeLine(index)} className="btn-icon btn-danger">×</button>
                   )}
                 </div>
               );
             })}
           </div>
-          <button type="button" onClick={addLine} className="btn btn-secondary">+ Ajouter une ligne</button>
+          {canEditQuote && <button type="button" onClick={addLine} className="btn btn-secondary">+ Ajouter une ligne</button>}
         </div>
 
         <div className="form-section totals-section">
@@ -281,6 +300,7 @@ const QuoteForm = () => {
               placeholder="Notes additionnelles..."
               minHeight={100}
               toolbar="minimal"
+              readOnly={!canEditQuote}
             />
           </div>
           <div className="form-group">
@@ -290,17 +310,22 @@ const QuoteForm = () => {
               onChange={(html) => setFormData((prev) => ({ ...prev, terms: html }))}
               placeholder="Conditions générales de vente..."
               minHeight={120}
+              readOnly={!canEditQuote}
             />
           </div>
         </div>
 
         <div className="form-actions">
-          <button type="button" onClick={(e) => handleSubmit(e, 'draft')} disabled={loading} className="btn btn-secondary">
-            Enregistrer en Brouillon
-          </button>
-          <button type="button" onClick={(e) => handleSubmit(e, 'sent')} disabled={loading} className="btn btn-primary">
-            Envoyer le devis au client
-          </button>
+          {canEditQuote && (
+            <>
+              <button type="button" onClick={(e) => handleSubmit(e, 'draft')} disabled={loading} className="btn btn-secondary">
+                Enregistrer en Brouillon
+              </button>
+              <button type="button" onClick={(e) => handleSubmit(e, 'sent')} disabled={loading} className="btn btn-primary">
+                Envoyer le devis au client
+              </button>
+            </>
+          )}
           <button type="button" onClick={() => navigate(-1)} className="btn btn-outline">Annuler</button>
         </div>
       </form>

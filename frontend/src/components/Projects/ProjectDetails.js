@@ -11,7 +11,6 @@ import './ProjectDetails.css';
 
 const STATUS_LABELS = {
   prospecting: 'Prospection',
-  quotation: 'Devis',
   inProgress: 'En cours',
   validation: 'Validation',
   completed: 'Terminé',
@@ -243,29 +242,31 @@ const ProjectDetails = () => {
           </>
         )}
 
-        <section className="project-detail-tabs">
-          <nav className="tabs-nav">
-            <NavLink to={`/projects/${id}`} end className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
-              Vue liste
-            </NavLink>
-            <NavLink to={`/projects/${id}/kanban`} className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
-              Kanban
-            </NavLink>
-            <NavLink to={`/projects/${id}/gantt`} className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
-              Gantt
-            </NavLink>
-            <NavLink to={`/projects/${id}/collaboration`} className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
-              Collaboration
-            </NavLink>
-          </nav>
-          <div className="tabs-content">
-            {isCollaboration ? (
-              <ProjectCollaboration projectId={id} project={project} onProjectUpdate={setProject} />
-            ) : (
-              <TaskList projectId={id} />
-            )}
-          </div>
-        </section>
+        {!isDirectorViewOnly && (
+          <section className="project-detail-tabs">
+            <nav className="tabs-nav">
+              <NavLink to={`/projects/${id}`} end className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
+                Vue liste
+              </NavLink>
+              <NavLink to={`/projects/${id}/kanban`} className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
+                Kanban
+              </NavLink>
+              <NavLink to={`/projects/${id}/gantt`} className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
+                Gantt
+              </NavLink>
+              <NavLink to={`/projects/${id}/collaboration`} className={({ isActive }) => 'tab-link' + (isActive ? ' active' : '')}>
+                Collaboration
+              </NavLink>
+            </nav>
+            <div className="tabs-content">
+              {isCollaboration ? (
+                <ProjectCollaboration projectId={id} project={project} onProjectUpdate={setProject} />
+              ) : (
+                <TaskList projectId={id} />
+              )}
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );

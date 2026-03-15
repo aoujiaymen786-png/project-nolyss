@@ -85,12 +85,12 @@ const InvoiceList = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Êtes-vous sûr ?')) {
+    if (window.confirm('Supprimer cette facture ?')) {
       try {
         await API.delete(`/invoices/${id}`);
         fetchInvoices();
       } catch (error) {
-        console.error('Erreur:', error);
+        alert(error.response?.data?.message || 'Erreur lors de la suppression.');
       }
     }
   };
@@ -190,7 +190,7 @@ const InvoiceList = () => {
                       {reminderLoadingId === invoice._id ? '…' : <Mail size={16} />}
                     </button>
                   )}
-                  {invoice.status === 'draft' && (
+                  {['draft', 'cancelled'].includes(invoice.status) && (
                     <button type="button" onClick={() => handleDelete(invoice._id)} className="btn-icon btn-danger" title="Supprimer"><Trash2 size={16} /></button>
                   )}
                 </td>

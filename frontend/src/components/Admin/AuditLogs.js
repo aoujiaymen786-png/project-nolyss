@@ -4,6 +4,29 @@ import './AdminCommon.css';
 
 const ACTIONS = ['CREATE_USER', 'UPDATE_USER', 'DELETE_USER', 'UPDATE_USER_ROLE', 'UPDATE_SYSTEM_SETTINGS', 'UPDATE_NOTIFICATION_CONFIG', 'CREATE_INTEGRATION', 'UPDATE_INTEGRATION', 'DELETE_INTEGRATION', 'CREATE_WORKFLOW', 'UPDATE_WORKFLOW', 'DELETE_WORKFLOW'];
 
+const ACTION_LABELS = {
+  CREATE_USER: 'Création utilisateur',
+  UPDATE_USER: 'Modification utilisateur',
+  DELETE_USER: 'Suppression utilisateur',
+  UPDATE_USER_ROLE: 'Changement de rôle',
+  UPDATE_SYSTEM_SETTINGS: 'Modification paramètres système',
+  UPDATE_NOTIFICATION_CONFIG: 'Modification notifications',
+  CREATE_INTEGRATION: 'Création intégration',
+  UPDATE_INTEGRATION: 'Modification intégration',
+  DELETE_INTEGRATION: 'Suppression intégration',
+  CREATE_WORKFLOW: 'Création workflow',
+  UPDATE_WORKFLOW: 'Modification workflow',
+  DELETE_WORKFLOW: 'Suppression workflow',
+};
+
+const ENTITY_LABELS = {
+  User: 'Utilisateur',
+  SystemSettings: 'Paramètres système',
+  Integration: 'Intégration',
+  Workflow: 'Workflow',
+  NotificationConfig: 'Configuration notifications',
+};
+
 const AuditLogs = () => {
   const [data, setData] = useState({ logs: [], total: 0, page: 1, limit: 50 });
   const [loading, setLoading] = useState(true);
@@ -52,7 +75,7 @@ const AuditLogs = () => {
             >
               <option value="">Toutes</option>
               {ACTIONS.map((a) => (
-                <option key={a} value={a}>{a}</option>
+                <option key={a} value={a}>{ACTION_LABELS[a] || a}</option>
               ))}
             </select>
           </div>
@@ -65,11 +88,11 @@ const AuditLogs = () => {
               style={{ minWidth: '140px' }}
             >
               <option value="">Toutes</option>
-              <option value="User">User</option>
-              <option value="SystemSettings">SystemSettings</option>
-              <option value="Integration">Integration</option>
-              <option value="Workflow">Workflow</option>
-              <option value="NotificationConfig">NotificationConfig</option>
+              <option value="User">{ENTITY_LABELS.User}</option>
+              <option value="SystemSettings">{ENTITY_LABELS.SystemSettings}</option>
+              <option value="Integration">{ENTITY_LABELS.Integration}</option>
+              <option value="Workflow">{ENTITY_LABELS.Workflow}</option>
+              <option value="NotificationConfig">{ENTITY_LABELS.NotificationConfig}</option>
             </select>
           </div>
         </div>
@@ -97,8 +120,8 @@ const AuditLogs = () => {
                   data.logs.map((log) => (
                     <tr key={log._id}>
                       <td>{new Date(log.createdAt).toLocaleString('fr-FR')}</td>
-                      <td><code style={{ fontSize: '0.8rem' }}>{log.action}</code></td>
-                      <td>{log.entity}</td>
+                      <td><code style={{ fontSize: '0.8rem' }}>{ACTION_LABELS[log.action] || log.action}</code></td>
+                      <td>{ENTITY_LABELS[log.entity] || log.entity}</td>
                       <td>{log.performedBy?.email || log.performedByEmail || '-'}</td>
                       <td>
                         {log.changes && (

@@ -28,6 +28,8 @@ const quoteSchema = mongoose.Schema(
     },
     notes: String,
     terms: String,
+    remindersSent: { type: Number, default: 0 },
+    lastReminderAt: Date,
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   },
   { timestamps: true }

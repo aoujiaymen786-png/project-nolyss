@@ -143,8 +143,15 @@ const InvoiceForm = () => {
     return { subtotal: acc.subtotal + net, tax: acc.tax + tva };
   }, { subtotal: 0, tax: 0 });
 
+  const canEditInvoice = !id || ['draft', 'sent'].includes(formData.status);
+  const invoiceStatusLabel = { draft: 'Brouillon', sent: 'Envoyée', partial: 'Partiellement payée', paid: 'Payée', overdue: 'En retard', cancelled: 'Annulée' }[formData.status] || formData.status;
+
   const handleSubmit = async (e, saveAs = 'draft') => {
     e.preventDefault();
+    if (!canEditInvoice) {
+      alert('Aucune modification possible : cette facture ne peut plus être modifiée (statut actuel : ' + invoiceStatusLabel + ').');
+      return;
+    }
     const validLines = formData.lines.filter((l) => (l.description || '').trim());
     if (validLines.length === 0) {
       alert('Au moins une ligne avec une description est requise.');
@@ -167,6 +174,7 @@ const InvoiceForm = () => {
       } else {
         await API.post('/invoices', payload);
       }
+      alert('Facture enregistrée.');
       navigate('/invoices');
     } catch (error) {
       alert(error.response?.data?.message || 'Erreur lors de la sauvegarde');
@@ -180,7 +188,13 @@ const InvoiceForm = () => {
       <h1>{id ? 'Éditer la Facture' : 'Nouvelle Facture'}</h1>
       <p className="form-intro">La facture constate une prestation ou une vente et engage le client au paiement. Vous pouvez la créer manuellement, à partir d’un devis accepté ou d’un projet.</p>
 
-      <form onSubmit={(e) => handleSubmit(e, 'preserve')}>
+      {id && !canEditInvoice && (
+        <div className="form-alert form-alert-info" role="alert">
+          Cette facture ne peut plus être modifiée (statut : <strong>{invoiceStatusLabel}</strong>). Vous pouvez uniquement la consulter.
+        </div>
+      )}
+
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(e, 'preserve'); }}>
         <div className="form-section">
           <h3>Informations de la facture</h3>
           <div className="form-grid">
@@ -363,21 +377,25 @@ const InvoiceForm = () => {
         </div>
 
         <div className="form-actions">
-          <button type="submit" disabled={loading} className="btn btn-secondary">
-            Enregistrer
-          </button>
-          <button type="button" onClick={(e) => handleSubmit(e, 'draft')} disabled={loading} className="btn btn-secondary">
-            Enregistrer en Brouillon
-          </button>
-          <button
-            type="button"
-            onClick={(e) => handleSubmit(e, 'sent')}
-            disabled={loading || ['paid', 'partial'].includes(formData.status)}
-            className="btn btn-primary"
-            title={['paid', 'partial'].includes(formData.status) ? 'Utilisez Enregistrer pour une facture déjà payée' : undefined}
-          >
-            Envoyer la facture au client
-          </button>
+          {canEditInvoice && (
+            <>
+              <button type="submit" disabled={loading} className="btn btn-secondary">
+                Enregistrer
+              </button>
+              <button type="button" onClick={(e) => handleSubmit(e, 'draft')} disabled={loading} className="btn btn-secondary">
+                Enregistrer en Brouillon
+              </button>
+              <button
+                type="button"
+                onClick={(e) => handleSubmit(e, 'sent')}
+                disabled={loading || ['paid', 'partial'].includes(formData.status)}
+                className="btn btn-primary"
+                title={['paid', 'partial'].includes(formData.status) ? 'Utilisez Enregistrer pour une facture déjà payée' : undefined}
+              >
+                Envoyer la facture au client
+              </button>
+            </>
+          )}
           <button type="button" onClick={() => navigate(-1)} className="btn btn-outline">Annuler</button>
         </div>
       </form>

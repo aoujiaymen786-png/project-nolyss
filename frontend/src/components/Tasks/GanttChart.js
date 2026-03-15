@@ -101,7 +101,7 @@ const GanttChart = () => {
 
   const chartTasks = filteredTasks.length ? filteredTasks : tasks;
 
-  const statusLabels = { todo: 'À faire', inProgress: 'En cours', review: 'Review', done: 'Terminé' };
+  const statusLabels = { todo: 'À faire', inProgress: 'En cours', review: 'En revue', done: 'Terminé' };
 
   return (
     <div className="gantt-container">

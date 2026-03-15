@@ -11,7 +11,6 @@ const KanbanBoard = ({ projectId: projectIdProp }) => {
   const location = useLocation();
   const projectId = projectIdProp || projectIdParam;
   const { user } = useContext(AuthContext);
-  const [tasks, setTasks] = useState({});
   const [allTasks, setAllTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [projectFilter, setProjectFilter] = useState(projectId || '');
@@ -23,9 +22,9 @@ const KanbanBoard = ({ projectId: projectIdProp }) => {
 
   const statuses = ['todo', 'inProgress', 'review', 'done'];
   const statusLabels = {
-    todo: 'A faire',
+    todo: 'À faire',
     inProgress: 'En cours',
-    review: 'En review',
+    review: 'En revue',
     done: 'Terminé',
   };
 
@@ -34,6 +33,14 @@ const KanbanBoard = ({ projectId: projectIdProp }) => {
     'medium': '#f59e0b',
     'high': '#ef4444'
   };
+
+  // Initialiser tasks avec toutes les colonnes pour éviter "Cannot find droppable entry with id [todo]"
+  const [tasks, setTasks] = useState(() => ({
+    todo: [],
+    inProgress: [],
+    review: [],
+    done: [],
+  }));
 
   useEffect(() => {
     if (projectId) setProjectFilter(projectId);
@@ -183,7 +190,7 @@ const KanbanBoard = ({ projectId: projectIdProp }) => {
           </select>
           <span className="task-count">Total: {totalTasks} tâches</span>
           <span className="task-count alert">Retards: {overdueCount}</span>
-          {projectId && (
+          {projectId && user?.role !== 'teamMember' && (
             <Link to={`/projects/${projectId}/tasks/new`} className="btn btn-primary kanban-add-task">
               + Nouvelle tâche
             </Link>

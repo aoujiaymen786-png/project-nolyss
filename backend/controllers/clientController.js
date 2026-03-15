@@ -38,8 +38,20 @@ const createClient = async (req, res) => {
 
 const getClients = async (req, res) => {
   try {
-    const clients = await Client.find({}).populate('createdBy', 'name email');
-    res.json(clients);
+    const clients = await Client.find({}).populate('createdBy', 'name email').lean();
+    const revenueByClient = await Invoice.aggregate([
+      { $match: { status: 'paid' } },
+      { $group: { _id: '$client', total: { $sum: '$totalTTC' } } },
+    ]);
+    const revenueMap = {};
+    revenueByClient.forEach((r) => {
+      if (r._id) revenueMap[r._id.toString()] = r.total ?? 0;
+    });
+    const withRevenue = clients.map((c) => ({
+      ...c,
+      revenue: revenueMap[c._id.toString()] ?? c.revenue ?? 0,
+    }));
+    res.json(withRevenue);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

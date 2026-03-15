@@ -11,7 +11,14 @@ const ROLES = [
   { value: 'client', label: 'Client' },
 ];
 
-const ROLE_LABELS = { director: 'Directeur', coordinator: 'Coordinatrice', projectManager: 'Chef de projet', teamMember: 'Membre d\'équipe' };
+const ROLE_LABELS = {
+  admin: 'Administrateur',
+  director: 'Directeur',
+  coordinator: 'Coordinateur',
+  projectManager: 'Chef de projet',
+  teamMember: 'Équipe',
+  client: 'Client',
+};
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);

@@ -7,7 +7,7 @@ const projectSchema = mongoose.Schema(
     type: { type: String },
     status: {
       type: String,
-      enum: ['prospecting', 'quotation', 'inProgress', 'validation', 'completed', 'archived'],
+      enum: ['prospecting', 'inProgress', 'validation', 'completed', 'archived'],
       default: 'prospecting',
     },
     priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },

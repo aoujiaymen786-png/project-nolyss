@@ -45,7 +45,7 @@ const Sidebar = () => {
             <NavLink to="/projects" className={linkClass}>Projets</NavLink>
           </li>
         )}
-        {role !== 'client' && role !== 'admin' && (
+        {role !== 'client' && role !== 'admin' && role !== 'director' && (
           <li>
             <NavLink to="/kanban" className={linkClass}>Kanban</NavLink>
           </li>

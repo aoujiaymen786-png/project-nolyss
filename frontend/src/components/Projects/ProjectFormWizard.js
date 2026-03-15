@@ -8,7 +8,6 @@ import './ProjectFormWizard.css';
 
 const STATUS_OPTIONS = [
   { value: 'prospecting', label: 'Prospection' },
-  { value: 'quotation', label: 'Devis' },
   { value: 'inProgress', label: 'En cours' },
   { value: 'validation', label: 'Validation' },
   { value: 'completed', label: 'Terminé' },

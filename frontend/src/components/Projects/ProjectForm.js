@@ -84,7 +84,6 @@ const ProjectForm = () => {
         <label>Statut</label>
         <select name="status" value={formik.values.status} onChange={formik.handleChange}>
           <option value="prospecting">Prospection</option>
-          <option value="quotation">Devis</option>
           <option value="inProgress">En cours</option>
           <option value="validation">Validation</option>
           <option value="completed">Terminé</option>

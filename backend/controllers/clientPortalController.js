@@ -17,14 +17,27 @@ const getClientProjects = async (req, res) => {
       { $match: { project: { $in: projectIds } } },
       { $group: { _id: '$project', total: { $sum: 1 }, done: { $sum: { $cond: [{ $eq: ['$status', 'done'] }, 1, 0] } } } }
     ]);
-    const progressByProject = {};
+    const progressByProjectTasks = {};
     progressAgg.forEach((p) => {
-      progressByProject[p._id.toString()] = p.total ? Math.round((p.done / p.total) * 100) : 0;
+      progressByProjectTasks[p._id.toString()] = p.total ? Math.round((p.done / p.total) * 100) : 0;
     });
-    const withProgress = projects.map((p) => ({
-      ...p.toObject ? p.toObject() : p,
-      progressPercentage: progressByProject[p._id.toString()] ?? 0,
-    }));
+    const hoursByProject = await Task.aggregate([
+      { $match: { project: { $in: projectIds } } },
+      { $group: { _id: '$project', estimated: { $sum: { $ifNull: ['$estimatedHours', 0] } }, actual: { $sum: { $ifNull: ['$actualHours', 0] } } } }
+    ]);
+    const hoursMap = {};
+    hoursByProject.forEach((p) => {
+      hoursMap[p._id.toString()] = { estimated: p.estimated ?? 0, actual: p.actual ?? 0 };
+    });
+    const withProgress = projects.map((p) => {
+      const pid = p._id.toString();
+      const hours = hoursMap[pid] || { estimated: 0, actual: 0 };
+      const taskBased = progressByProjectTasks[pid] ?? 0;
+      const progressPercentage = hours.estimated > 0
+        ? Math.min(100, Math.round((hours.actual / hours.estimated) * 100))
+        : taskBased;
+      return { ...p.toObject ? p.toObject() : p, progressPercentage };
+    });
     res.json(withProgress);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -37,6 +50,20 @@ const getClientInvoices = async (req, res) => {
       .select('number date dueDate totalTTC status paidAmount project')
       .populate('project', 'name');
     res.json(invoices);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+const getClientInvoiceById = async (req, res) => {
+  try {
+    const invoice = await Invoice.findById(req.params.id)
+      .populate('project', 'name')
+      .lean();
+    if (!invoice || invoice.client.toString() !== req.client._id.toString()) {
+      return res.status(404).json({ message: 'Facture non trouvée' });
+    }
+    res.json(invoice);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -257,6 +284,7 @@ const createClientClaim = async (req, res) => {
 module.exports = {
   getClientProjects,
   getClientInvoices,
+  getClientInvoiceById,
   getClientQuotes,
   getClientQuoteById,
   clientAcceptRefuseQuote,

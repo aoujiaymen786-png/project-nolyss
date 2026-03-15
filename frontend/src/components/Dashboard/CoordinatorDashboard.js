@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../../utils/api';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
 import './Dashboard.css';
@@ -19,7 +19,6 @@ const COORDINATOR_WIDGET_LAYOUT = [
 
 const STATUS_LABELS = {
   prospecting: 'Prospection',
-  quotation: 'Devis',
   inProgress: 'En cours',
   validation: 'Validation',
 };
@@ -173,40 +172,39 @@ const CoordinatorDashboard = () => {
         </div>
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card">
+          <div className="chart-card chart-card-coordinator-pie">
             <h3>Répartition des projets actifs</h3>
             {(data.projectsByStatus || []).length > 0 ? (
-              <ResponsiveContainer width="100%" height={320}>
-                <PieChart>
-                  <defs>
-                    <linearGradient id="coordPieGradient" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#0ea5e9" />
-                      <stop offset="50%" stopColor="#6366f1" />
-                      <stop offset="100%" stopColor="#a855f7" />
-                    </linearGradient>
-                  </defs>
-                  <Pie
-                    data={data.projectsByStatus.map((s) => ({ ...s, label: STATUS_LABELS[s._id] || s._id }))}
-                    dataKey="count"
-                    nameKey="label"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={120}
-                    paddingAngle={2}
-                    label
-                    isAnimationActive
-                    animationDuration={900}
-                    activeIndex={activeProjectSlice}
-                    onMouseEnter={(_, index) => setActiveProjectSlice(index)}
-                  >
-                    {(data.projectsByStatus || []).map((entry, idx) => (
-                      <Cell key={entry._id || idx} fill="url(#coordPieGradient)" />
-                    ))}
-                  </Pie>
-                  <Tooltip content={renderChartTooltip} />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="chart-card-inner chart-card-inner-pie">
+                <ResponsiveContainer width="100%" height={340} minHeight={320}>
+                  <PieChart margin={{ top: 20, right: 24, bottom: 64, left: 24 }}>
+                    <Pie
+                      data={data.projectsByStatus.map((s) => ({ ...s, label: STATUS_LABELS[s._id] || s._id }))}
+                      dataKey="count"
+                      nameKey="label"
+                      cx="50%"
+                      cy="42%"
+                      innerRadius={52}
+                      outerRadius={80}
+                      paddingAngle={2}
+                      stroke="var(--surface)"
+                      strokeWidth={2}
+                      label={({ label, percent }) => (percent >= 0.01 ? `${label} ${(percent * 100).toFixed(0)}%` : '')}
+                      labelLine={{ stroke: 'var(--text-secondary)', strokeWidth: 1 }}
+                      isAnimationActive
+                      animationDuration={800}
+                      activeIndex={activeProjectSlice}
+                      onMouseEnter={(_, index) => setActiveProjectSlice(index)}
+                    >
+                      {(data.projectsByStatus || []).map((entry, idx) => (
+                        <Cell key={entry._id || idx} fill={['#94a3b8', '#f59e0b', '#0ea5e9', '#8b5cf6', '#22c55e', '#64748b'][idx % 6]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={renderChartTooltip} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 12, paddingBottom: 4 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : <p className="chart-empty">Pas de données</p>}
           </div>
         </div>
@@ -215,29 +213,28 @@ const CoordinatorDashboard = () => {
           <div className="chart-card">
             <h3>Répartition des ressources</h3>
             {(data.resourceDistribution || []).length > 0 ? (
-              <ResponsiveContainer width="100%" height={260}>
-                <BarChart
-                  data={(data.resourceDistribution || []).slice(0, 12)}
-                  barCategoryGap={26}
-                  barGap={8}
-                >
-                  <defs>
-                    <linearGradient id="coordBarResources" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#fb923c" />
-                      <stop offset="100%" stopColor="#b91c1c" />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="name" angle={-30} textAnchor="end" height={70} />
-                  <YAxis />
-                  <Tooltip content={renderChartTooltip} />
-                  <Bar
-                    dataKey="openTasks"
-                    fill="url(#coordBarResources)"
-                    radius={[10, 10, 0, 0]}
-                    animationDuration={900}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="chart-card-inner">
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={(data.resourceDistribution || []).slice(0, 12)}
+                    barCategoryGap={20}
+                    barGap={8}
+                    margin={{ top: 12, right: 20, bottom: 32, left: 12 }}
+                  >
+                    <defs>
+                      <linearGradient id="coordBarResources" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="var(--primary)" />
+                        <stop offset="100%" stopColor="var(--primary-hover, #c23d14)" />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="name" angle={-35} textAnchor="end" height={72} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                    <YAxis width={32} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                    <Tooltip content={renderChartTooltip} />
+                    <Bar dataKey="openTasks" name="Tâches ouvertes" fill="url(#coordBarResources)" radius={[8, 8, 0, 0]} maxBarSize={48} animationDuration={800} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             ) : <p className="chart-empty">Pas de données</p>}
           </div>
         </div>

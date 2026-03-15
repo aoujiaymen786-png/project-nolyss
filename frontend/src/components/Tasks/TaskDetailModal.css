@@ -253,6 +253,16 @@
   cursor: pointer;
 }
 
+.task-detail-btn-delete {
+  color: #b91c1c;
+  border-color: rgba(185, 28, 28, 0.4) !important;
+  margin-right: auto;
+}
+
+.task-detail-btn-delete:hover:not(:disabled) {
+  background: rgba(185, 28, 28, 0.08);
+}
+
 .task-detail-loading,
 .task-detail-error {
   padding: 2rem;

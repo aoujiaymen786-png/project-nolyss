@@ -2,10 +2,9 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import API from '../../utils/api';
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
-import { MessageSquare } from 'lucide-react';
 import './Dashboard.css';
 
 const MANAGER_WIDGET_LAYOUT = [
@@ -22,7 +21,6 @@ const MANAGER_WIDGET_LAYOUT = [
 
 const PROJECT_STATUS_LABELS = {
   prospecting: 'Prospection',
-  quotation: 'Devis',
   inProgress: 'En cours',
   validation: 'Validation',
   completed: 'Terminé',
@@ -30,9 +28,9 @@ const PROJECT_STATUS_LABELS = {
 };
 
 const TASK_STATUS_LABELS = {
-  todo: 'A faire',
+  todo: 'À faire',
   inProgress: 'En cours',
-  review: 'En review',
+  review: 'En revue',
   done: 'Terminé',
 };
 
@@ -71,6 +69,35 @@ const ManagerDashboard = () => {
     ...s,
     label: TASK_STATUS_LABELS[s._id] || s._id,
   }));
+
+  // Couleurs distinctes par statut de tâche (À faire, En cours, En review, Terminé)
+  const TASK_STATUS_COLORS = {
+    todo: '#64748b',
+    inProgress: '#0ea5e9',
+    review: '#f59e0b',
+    done: '#22c55e',
+  };
+
+  // Répartition des projets par statut : tous les statuts affichés (données complètes et distinctes)
+  const ALL_PROJECT_STATUSES = ['prospecting', 'quotation', 'inProgress', 'validation', 'completed', 'archived'];
+  const projectCountByStatus = (stats.myProjects || []).reduce((acc, p) => {
+    const s = p.status || 'inProgress';
+    acc[s] = (acc[s] || 0) + 1;
+    return acc;
+  }, {});
+  const projectStatusChartData = ALL_PROJECT_STATUSES.map((status) => ({
+    status,
+    label: PROJECT_STATUS_LABELS[status] || status,
+    count: projectCountByStatus[status] || 0,
+  }));
+  const PROJECT_STATUS_CHART_COLORS = {
+    prospecting: '#94a3b8',
+    quotation: '#f59e0b',
+    inProgress: '#0ea5e9',
+    validation: '#8b5cf6',
+    completed: '#22c55e',
+    archived: '#64748b',
+  };
 
   const renderChartTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
@@ -232,88 +259,89 @@ const ManagerDashboard = () => {
         </div>
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card">
-            <h3>Progression des Projets</h3>
-            {stats.projectTimeline && stats.projectTimeline.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <LineChart data={stats.projectTimeline}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(148, 163, 184, 0.25)" />
-                  <XAxis dataKey="date" />
-                  <YAxis />
-                  <Tooltip content={renderChartTooltip} />
-                  <Legend />
-                  <Line type="monotone" dataKey="completed" stroke="#22c55e" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="inProgress" stroke="#0ea5e9" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="pending" stroke="#f97316" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <p className="chart-empty">Pas de données</p>}
+          <div className="chart-card chart-card--centered">
+            <h3>Répartition des projets par statut</h3>
+            <div className="chart-card-inner">
+              <div className="chart-card-chart-wrap">
+                <ResponsiveContainer width="100%" height={240}>
+                  <BarChart data={projectStatusChartData} barCategoryGap={16} barGap={6} margin={{ top: 16, right: 24, bottom: 32, left: 16 }}>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="label" angle={-35} textAnchor="end" height={64} tick={{ fontSize: 12, fill: 'var(--text-primary)' }} />
+                    <YAxis allowDecimals={false} width={36} tick={{ fontSize: 12, fill: 'var(--text-primary)' }} />
+                    <Tooltip content={renderChartTooltip} />
+                    <Bar dataKey="count" name="Nombre de projets" radius={[8, 8, 0, 0]} maxBarSize={48}>
+                      {projectStatusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={PROJECT_STATUS_CHART_COLORS[entry.status] || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           </div>
         </div>
         <div key="chart-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
           <div className="chart-card">
-            <h3>Tâches par Statut</h3>
+            <h3>Tâches par statut</h3>
             {tasksByStatusForChart.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <defs>
-                    <linearGradient id="managerPieGradient" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#6366f1" />
-                      <stop offset="50%" stopColor="#0ea5e9" />
-                      <stop offset="100%" stopColor="#22c55e" />
-                    </linearGradient>
-                  </defs>
-                  <Pie
-                    data={tasksByStatusForChart}
-                    dataKey="count"
-                    nameKey="label"
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={110}
-                    paddingAngle={2}
-                    label
-                    isAnimationActive
-                    animationDuration={900}
-                    activeIndex={activeTaskStatusSlice}
-                    onMouseEnter={(_, index) => setActiveTaskStatusSlice(index)}
-                  >
-                    {tasksByStatusForChart.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill="url(#managerPieGradient)" />
-                    ))}
-                  </Pie>
-                  <Tooltip content={renderChartTooltip} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              <div className="chart-card-inner">
+                <ResponsiveContainer width="100%" height={280}>
+                  <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                    <Pie
+                      data={tasksByStatusForChart}
+                      dataKey="count"
+                      nameKey="label"
+                      cx="50%"
+                      cy="48%"
+                      innerRadius={64}
+                      outerRadius={100}
+                      paddingAngle={3}
+                      stroke="var(--surface)"
+                      strokeWidth={2}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={{ stroke: 'var(--text-secondary)', strokeWidth: 1 }}
+                      isAnimationActive
+                      animationDuration={800}
+                      activeIndex={activeTaskStatusSlice}
+                      onMouseEnter={(_, index) => setActiveTaskStatusSlice(index)}
+                    >
+                      {tasksByStatusForChart.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={TASK_STATUS_COLORS[entry._id] || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip content={renderChartTooltip} />
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 8 }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             ) : <p className="chart-empty">Pas de données</p>}
           </div>
         </div>
         <div key="chart-3" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card">
-            <h3>Charge par Membre</h3>
+          <div className="chart-card chart-card--centered">
+            <h3>Charge par membre</h3>
             {stats.tasksByMember && stats.tasksByMember.length > 0 ? (
-              <ResponsiveContainer width="100%" height={220}>
-                <BarChart data={stats.tasksByMember} barCategoryGap={24} barGap={8}>
-                  <defs>
-                    <linearGradient id="managerBarTasks" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#38bdf8" />
-                      <stop offset="100%" stopColor="#0f766e" />
-                    </linearGradient>
-                  </defs>
-                  <XAxis dataKey="member" angle={-45} textAnchor="end" height={80} />
-                  <YAxis />
-                  <Tooltip content={renderChartTooltip} />
-                  <Bar
-                    dataKey="taskCount"
-                    fill="url(#managerBarTasks)"
-                    radius={[10, 10, 0, 0]}
-                    animationDuration={900}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              <div className="chart-card-inner">
+                <div className="chart-card-chart-wrap">
+                  <ResponsiveContainer width="100%" height={240}>
+                    <BarChart data={stats.tasksByMember} barCategoryGap={20} barGap={8} margin={{ top: 16, right: 24, bottom: 36, left: 16 }}>
+                      <defs>
+                        <linearGradient id="managerBarTasks" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="var(--primary)" />
+                          <stop offset="100%" stopColor="var(--primary-hover, #c23d14)" />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                      <XAxis dataKey="member" angle={-35} textAnchor="end" height={64} tick={{ fontSize: 12, fill: 'var(--text-primary)' }} />
+                      <YAxis width={36} allowDecimals={false} tick={{ fontSize: 12, fill: 'var(--text-primary)' }} />
+                      <Tooltip content={renderChartTooltip} />
+                      <Bar dataKey="taskCount" name="Tâches" fill="url(#managerBarTasks)" radius={[8, 8, 0, 0]} maxBarSize={48} animationDuration={800} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
             ) : <p className="chart-empty">Pas de données</p>}
           </div>
         </div>
@@ -455,49 +483,6 @@ const ManagerDashboard = () => {
           </div>
         ) : <p>Aucune échéance proche</p>}
       </div>
-
-      {/* Alertes blocages */}
-      <div className="table-section">
-        <h3> Alertes blocages</h3>
-        {stats.blockedAlerts && stats.blockedAlerts.length > 0 ? (
-          <ul className="notifications-list">
-            {stats.blockedAlerts.map((a, idx) => (
-              <li key={idx}>
-                <strong>{a.project || 'Projet'}</strong> — {a.title}
-                {a.assignedTo && a.assignedTo.length > 0 ? ` (${a.assignedTo.join(', ')})` : ''}
-                {a.dueDate ? ` — échéance ${new Date(a.dueDate).toLocaleDateString('fr-FR')}` : ''}
-              </li>
-            ))}
-          </ul>
-        ) : <p>Aucune alerte de blocage</p>}
-      </div>
-
-      {/* Derniers commentaires */}
-      {stats.recentComments && stats.recentComments.length > 0 && (
-        <div className="table-section">
-          <h3 className="section-title-with-icon"><MessageSquare size={18} /> Derniers commentaires</h3>
-          <ul className="notifications-list">
-            {stats.recentComments.map((c, idx) => (
-              <li key={idx}>
-                <strong>{c.projectName}</strong> — {c.taskTitle} : {c.text}
-                {c.author && <span className="comment-meta"> — {c.author}, {c.createdAt ? new Date(c.createdAt).toLocaleDateString('fr-FR') : ''}</span>}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {/* Notifications */}
-      {stats.notifications && stats.notifications.length > 0 && (
-        <div className="table-section">
-          <h3> Notifications</h3>
-          <ul className="notifications-list">
-            {stats.notifications.map((n, idx) => (
-              <li key={idx}>{n.message || n.text || JSON.stringify(n)}</li>
-            ))}
-          </ul>
-        </div>
-      )}
 
       {/* Reporting */}
       <div className="table-section">
