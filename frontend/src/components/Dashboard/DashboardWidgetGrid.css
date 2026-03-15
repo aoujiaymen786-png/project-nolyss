@@ -58,3 +58,12 @@
   flex: 1;
   min-height: 0;
 }
+
+/* Widgets statiques (ex. KPI) : pas de poignée de drag, disposition fixe */
+.react-grid-item.react-grid-placeholder {
+  z-index: 1;
+}
+
+.react-grid-item.static .dashboard-widget-drag-handle {
+  display: none;
+}

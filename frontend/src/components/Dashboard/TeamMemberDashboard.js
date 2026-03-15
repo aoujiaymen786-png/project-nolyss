@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Eye, Pencil, Play, Save, Square, ExternalLink, LayoutGrid, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import API from '../../utils/api';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
@@ -155,7 +156,7 @@ const TeamMemberDashboard = () => {
       <DashboardWidgetGrid storageKey="team-member" defaultLayout={TEAM_MEMBER_WIDGET_LAYOUT}>
         <div key="kpi-tasks" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="clipboard" />
             <div className="kpi-content">
               <h3>Tâches en cours</h3>
@@ -165,7 +166,7 @@ const TeamMemberDashboard = () => {
         </div>
         <div key="kpi-overdue" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="warning" />
             <div className="kpi-content">
               <h3>En retard</h3>
@@ -175,7 +176,7 @@ const TeamMemberDashboard = () => {
         </div>
         <div key="kpi-projects" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="folder" />
             <div className="kpi-content">
               <h3>Projets assignés</h3>
@@ -185,7 +186,7 @@ const TeamMemberDashboard = () => {
         </div>
         <div key="kpi-time" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="clock" />
             <div className="kpi-content">
               <h3>Temps travaillé (h)</h3>
@@ -243,27 +244,24 @@ const TeamMemberDashboard = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                         <span style={{ minWidth: 70, fontFamily: 'monospace' }}>{formatTimer(task._id)}</span>
                         {!activeTimers[task._id] ? (
-                          <button type="button" onClick={() => startTimer(task._id)}>
-                            Démarrer
-                          </button>
+                          <button type="button" className="btn-icon btn-timer-start" onClick={() => startTimer(task._id)} title="Démarrer"><Play size={18} /></button>
                         ) : (
-                          <button type="button" onClick={() => stopTimer(task._id)}>
-                            Arrêter
-                          </button>
+                          <button type="button" className="btn-icon btn-timer-stop" onClick={() => stopTimer(task._id)} title="Arrêter"><Square size={18} /></button>
                         )}
                       </div>
                     </td>
                     <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>
                       <div className="quick-actions-cell">
-                        <Link to={`/tasks/edit/${task._id}`} className="quick-action-link">Détails</Link>
+                        <Link to={`/tasks/edit/${task._id}`} className="btn-icon" title="Détails"><Eye size={18} /></Link>
                         <button
                           type="button"
-                          className="quick-action-btn"
+                          className="btn-icon"
                           onClick={() => saveTaskQuickUpdate(task._id)}
                           disabled={savingTaskId === task._id}
+                          title="Enregistrer"
                         >
-                          {savingTaskId === task._id ? 'Enregistrement…' : 'Enregistrer'}
+                          <Save size={18} />
                         </button>
                       </div>
                     </td>
@@ -298,8 +296,8 @@ const TeamMemberDashboard = () => {
                     <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>
                       <div className="quick-actions-cell">
-                        {task.project?._id && <Link to={`/projects/${task.project._id}`} className="quick-action-link">Voir projet</Link>}
-                        <Link to={`/tasks/edit/${task._id}`} className="quick-action-link">Modifier</Link>
+                        {task.project?._id && <Link to={`/projects/${task.project._id}`} className="btn-icon" title="Voir projet"><Eye size={18} /></Link>}
+                        <Link to={`/tasks/edit/${task._id}`} className="btn-icon" title="Modifier"><Pencil size={18} /></Link>
                       </div>
                     </td>
                   </tr>
@@ -336,7 +334,7 @@ const TeamMemberDashboard = () => {
                     <td>{project.startDate ? new Date(project.startDate).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>{(project.deadline || project.endDate) ? new Date(project.deadline || project.endDate).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>
-                      <Link to={`/projects/${project._id}`}>Ouvrir</Link>
+                      <Link to={`/projects/${project._id}`} className="btn-icon" title="Ouvrir"><ExternalLink size={18} /></Link>
                     </td>
                   </tr>
                 ))}
@@ -428,8 +426,8 @@ const TeamMemberDashboard = () => {
                 {assignedProjects.map((p) => (
                   <tr key={p._id}>
                     <td>{p.name}</td>
-                    <td><Link to={`/projects/${p._id}/kanban`}>Ouvrir Kanban</Link></td>
-                    <td><Link to={`/projects/${p._id}/gantt`}>Ouvrir Gantt</Link></td>
+                    <td><Link to={`/projects/${p._id}/kanban`} className="btn-icon" title="Ouvrir Kanban"><LayoutGrid size={18} /></Link></td>
+                    <td><Link to={`/projects/${p._id}/gantt`} className="btn-icon" title="Ouvrir Gantt"><BarChart3 size={18} /></Link></td>
                   </tr>
                 ))}
               </tbody>

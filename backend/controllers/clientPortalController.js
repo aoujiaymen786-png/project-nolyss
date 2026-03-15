@@ -200,6 +200,12 @@ const createClientPayment = async (req, res) => {
 
     await invoice.save();
 
+    try {
+      await notificationService.notifyClientPaymentRecorded(invoice, req.client._id, numericAmount);
+    } catch (e) {
+      console.error('Notification client paiement enregistré:', e);
+    }
+
     res.status(201).json({
       message: 'Paiement enregistré avec succès.',
       invoice,

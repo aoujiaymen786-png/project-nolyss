@@ -100,7 +100,32 @@
   min-height: 100px;
 }
 
-.kpi-card:hover {
+/* KPI en forme de widgets (même style que les cartes graphiques) */
+.kpi-card.kpi-widget {
+  border-radius: 14px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 2px 12px rgba(15, 23, 42, 0.06);
+  position: relative;
+  overflow: hidden;
+}
+
+.kpi-card.kpi-widget::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary), var(--primary-hover, #c23d14));
+  border-radius: 4px 0 0 4px;
+}
+
+.kpi-card.kpi-widget:hover {
+  box-shadow: 0 8px 28px rgba(15, 23, 42, 0.1);
+  border-color: rgba(223, 48, 0, 0.12);
+}
+
+.kpi-card:not(.kpi-widget):hover {
   transform: translateY(-3px);
   box-shadow: var(--shadow-md);
   border-color: var(--primary-light);
@@ -438,17 +463,20 @@
 }
 
 .manager-project-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   white-space: nowrap;
 }
 
-.manager-project-actions a {
+.manager-project-actions a:not(.btn-icon) {
   margin-right: 0.75rem;
   color: var(--primary);
   text-decoration: none;
   font-size: 0.9rem;
 }
 
-.manager-project-actions a:hover {
+.manager-project-actions a:not(.btn-icon):hover {
   text-decoration: underline;
 }
 
@@ -731,6 +759,55 @@
 .quick-actions-cell .quick-action-btn:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+.quick-actions-cell .btn-icon,
+.admin-table .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(223, 48, 0, 0.1);
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.quick-actions-cell .btn-icon:hover,
+.admin-table .btn-icon:hover {
+  background: rgba(223, 48, 0, 0.25);
+  color: var(--primary);
+}
+
+.quick-actions-cell .btn-icon:disabled,
+.admin-table .btn-icon:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.admin-table .btn-icon.btn-timer-start {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+.admin-table .btn-icon.btn-timer-start:hover {
+  background: rgba(220, 38, 38, 0.25);
+  color: #b91c1c;
+}
+
+.admin-table .btn-icon.btn-timer-stop {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
+}
+
+.admin-table .btn-icon.btn-timer-stop:hover {
+  background: rgba(34, 197, 94, 0.3);
+  color: #15803d;
 }
 
 /* ----- Section Réclamations (portail client) ----- */

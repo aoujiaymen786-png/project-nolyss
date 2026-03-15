@@ -98,7 +98,7 @@ const AdminDashboard = () => {
       <DashboardWidgetGrid storageKey="admin" defaultLayout={ADMIN_WIDGET_LAYOUT}>
         <div key="kpi-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="users" />
             <div className="kpi-content">
               <h3>Utilisateurs Actifs</h3>
@@ -108,7 +108,7 @@ const AdminDashboard = () => {
         </div>
         <div key="kpi-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="folder" />
             <div className="kpi-content">
               <h3>Projets Totaux</h3>
@@ -118,7 +118,7 @@ const AdminDashboard = () => {
         </div>
         <div key="kpi-3" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="check" />
             <div className="kpi-content">
               <h3>Tâches Complétées</h3>
@@ -128,7 +128,7 @@ const AdminDashboard = () => {
         </div>
         <div key="kpi-4" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="clock" />
             <div className="kpi-content">
               <h3>Tâches en Cours</h3>

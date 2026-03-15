@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import API from '../../utils/api';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -56,10 +57,10 @@ const ClientList = () => {
       sortable: false,
       render: (_, row) => (
         <span className="actions-cell">
-          <Link to={`/clients/${row._id}`}>Voir</Link>
-          <Link to={`/clients/edit/${row._id}`}>Modifier</Link>
+          <Link to={`/clients/${row._id}`} className="btn-icon" title="Voir"><Eye size={18} /></Link>
+          <Link to={`/clients/edit/${row._id}`} className="btn-icon" title="Modifier"><Pencil size={18} /></Link>
           {canDelete && (
-            <button type="button" className="btn-delete" onClick={() => handleDelete(row._id)}>Supprimer</button>
+            <button type="button" className="btn-icon btn-danger" onClick={() => handleDelete(row._id)} title="Supprimer"><Trash2 size={18} /></button>
           )}
         </span>
       ),

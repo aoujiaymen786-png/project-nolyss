@@ -8,27 +8,49 @@ const ResponsiveGrid = WidthProvider(ResponsiveGridLayout);
 
 const STORAGE_PREFIX = 'dashboard-layout-';
 
+/** Fusionne le layout stocké avec le défaut : les widgets marqués static gardent toujours leur position par défaut. */
+function mergeWithStored(defaultLayout, storedLayout) {
+  if (!storedLayout?.length) return defaultLayout;
+  const storedByKey = new Map(storedLayout.map((item) => [item.i, item]));
+  return defaultLayout.map((defaultItem) => {
+    if (defaultItem.static) return { ...defaultItem };
+    const stored = storedByKey.get(defaultItem.i);
+    if (!stored) return { ...defaultItem };
+    return { ...defaultItem, x: stored.x, y: stored.y, w: stored.w, h: stored.h };
+  });
+}
+
+function getStoredLayout(storageKey, defaultLayout) {
+  try {
+    const stored = localStorage.getItem(`${STORAGE_PREFIX}${storageKey}`);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      if (parsed?.lg?.length) {
+        return { lg: mergeWithStored(defaultLayout, parsed.lg) };
+      }
+    }
+  } catch (_) {
+    /* ignore */
+  }
+  return { lg: defaultLayout };
+}
+
 /**
  * Grille de widgets déplaçables. Les widgets peuvent être déplacés directement
- * via la poignée sans mode d'édition.
+ * via la poignée sans mode d'édition. Les positions sont persistées en
+ * localStorage et restaurées à la réouverture.
  *
  * @param {string} storageKey - Clé pour persister le layout (ex: 'executive', 'team-member')
  * @param {Array} defaultLayout - Layout par défaut [{ i, x, y, w, h }, ...]
  * @param {React.ReactNode} children - Enfants avec key correspondant au layout
  */
 const DashboardWidgetGrid = ({ storageKey, defaultLayout, id, children }) => {
-  const [layouts, setLayouts] = useState({ lg: defaultLayout });
+  const [layouts, setLayouts] = useState(() => getStoredLayout(storageKey, defaultLayout));
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(`${STORAGE_PREFIX}${storageKey}`);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed?.lg?.length) setLayouts({ lg: parsed.lg });
-      }
-    } catch (_) {
-      /* ignore */
-    }
+    if (!storageKey) return;
+    const next = getStoredLayout(storageKey, defaultLayout);
+    setLayouts(next);
   }, [storageKey]);
 
   const handleLayoutChange = useCallback(

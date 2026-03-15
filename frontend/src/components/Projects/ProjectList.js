@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import API from '../../utils/api';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -239,8 +240,13 @@ const ProjectList = () => {
                     <td>{p.deadline ? new Date(p.deadline).toLocaleDateString('fr-FR') : '–'}</td>
                     <td>{p.estimatedBudget != null ? `${p.estimatedBudget} TND` : '–'}</td>
                     <td className="actions-cell">
-                      <Link to={`/projects/${p._id}`}>Voir</Link>
-                      {canManageProjects && <><Link to={`/projects/edit/${p._id}`}>Modifier</Link><button type="button" className="btn-delete" onClick={() => handleDelete(p._id)}>Supprimer</button></>}
+                      <Link to={`/projects/${p._id}`} className="btn-icon" title="Voir"><Eye size={18} /></Link>
+                      {canManageProjects && (
+                        <>
+                          <Link to={`/projects/edit/${p._id}`} className="btn-icon" title="Modifier"><Pencil size={18} /></Link>
+                          <button type="button" className="btn-icon btn-danger" onClick={() => handleDelete(p._id)} title="Supprimer"><Trash2 size={18} /></button>
+                        </>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -268,8 +274,8 @@ const ProjectList = () => {
                   <span>{p.estimatedBudget != null ? `${p.estimatedBudget} TND` : '–'}</span>
                 </div>
                 <div className="project-card-actions">
-                  <Link to={`/projects/${p._id}`}>Ouvrir</Link>
-                  {canManageProjects && <Link to={`/projects/edit/${p._id}`}>Modifier</Link>}
+                  <Link to={`/projects/${p._id}`} className="btn-icon" title="Ouvrir"><Eye size={18} /></Link>
+                  {canManageProjects && <Link to={`/projects/edit/${p._id}`} className="btn-icon" title="Modifier"><Pencil size={18} /></Link>}
                 </div>
               </div>
             ))

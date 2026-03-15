@@ -7,13 +7,13 @@ import KpiIcon from '../UI/KpiIcon';
 import './Dashboard.css';
 
 const EXECUTIVE_WIDGET_LAYOUT = [
-  { i: 'kpi-ca', x: 0, y: 0, w: 2, h: 2 },
-  { i: 'kpi-projets', x: 2, y: 0, w: 2, h: 2 },
-  { i: 'kpi-clients', x: 4, y: 0, w: 2, h: 2 },
-  { i: 'kpi-devis', x: 6, y: 0, w: 2, h: 2 },
-  { i: 'kpi-factures', x: 8, y: 0, w: 2, h: 2 },
-  { i: 'chart-financial', x: 0, y: 2, w: 6, h: 3 },
-  { i: 'chart-workload', x: 6, y: 2, w: 6, h: 4 },
+  { i: 'kpi-ca', x: 0, y: 0, w: 2, h: 2, static: true },
+  { i: 'kpi-projets', x: 2, y: 0, w: 2, h: 2, static: true },
+  { i: 'kpi-clients', x: 4, y: 0, w: 2, h: 2, static: true },
+  { i: 'kpi-devis', x: 6, y: 0, w: 2, h: 2, static: true },
+  { i: 'kpi-factures', x: 8, y: 0, w: 2, h: 2, static: true },
+  { i: 'chart-financial', x: 0, y: 2, w: 5, h: 4, static: true },
+  { i: 'chart-workload', x: 5, y: 2, w: 5, h: 4, static: true },
 ];
 
 const COLORS = ['rgb(223, 48, 0)', 'rgb(255, 145, 37)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)', 'rgb(114, 224, 232)'];
@@ -214,7 +214,7 @@ const ExecutiveDashboard = () => {
       <DashboardWidgetGrid id="kpis" storageKey="executive" defaultLayout={EXECUTIVE_WIDGET_LAYOUT}>
         <div key="kpi-ca" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="wallet" />
             <div className="kpi-content">
               <h3>Chiffre d&apos;affaires</h3>
@@ -224,7 +224,7 @@ const ExecutiveDashboard = () => {
         </div>
         <div key="kpi-projets" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="folder" />
             <div className="kpi-content">
               <h3>Projets</h3>
@@ -234,7 +234,7 @@ const ExecutiveDashboard = () => {
         </div>
         <div key="kpi-clients" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="users" />
             <div className="kpi-content">
               <h3>Clients</h3>
@@ -244,7 +244,7 @@ const ExecutiveDashboard = () => {
         </div>
         <div key="kpi-devis" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="file" />
             <div className="kpi-content">
               <h3>Devis en attente (&gt; seuil)</h3>
@@ -254,7 +254,7 @@ const ExecutiveDashboard = () => {
         </div>
         <div key="kpi-factures" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="receipt" />
             <div className="kpi-content">
               <h3>Factures en attente (&gt; seuil)</h3>
@@ -324,35 +324,17 @@ const ExecutiveDashboard = () => {
         </div>
         <div key="chart-workload" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card chart-card-workload">
-            <h3>Charge de travail par équipe / membre</h3>
-            {workloadByTeam?.length > 0 ? (
+          <div className="chart-card">
+            <h3>Projets par statut</h3>
+            {projectsByStatusForChart.length > 0 ? (
               <div className="chart-card-inner">
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart
-                    data={workloadByTeam}
-                    layout="vertical"
-                    margin={{ top: 16, right: 24, bottom: 16, left: 100 }}
-                    barCategoryGap={24}
-                    barGap={12}
-                  >
-                    <defs>
-                      <linearGradient id="execBarEstimated" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="#0ea5e9" />
-                        <stop offset="100%" stopColor="#0369a1" />
-                      </linearGradient>
-                      <linearGradient id="execBarActual" x1="0" y1="0" x2="1" y2="0">
-                        <stop offset="0%" stopColor="var(--primary)" />
-                        <stop offset="100%" stopColor="var(--primary-hover, #c23d14)" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="rgba(148, 163, 184, 0.25)" />
-                    <XAxis type="number" tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} allowDecimals={false} />
-                    <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 12, fill: 'var(--text-primary)' }} />
+                  <BarChart data={projectsByStatusForChart} barCategoryGap={20} barGap={8} margin={{ top: 12, right: 20, bottom: 28, left: 12 }}>
+                    <CartesianGrid strokeDasharray="4 4" vertical={false} />
+                    <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} height={40} />
+                    <YAxis width={32} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
                     <Tooltip content={renderChartTooltip} />
-                    <Legend wrapperStyle={{ paddingTop: 12 }} />
-                    <Bar dataKey="estimatedHours" name="Heures estimées" fill="url(#execBarEstimated)" radius={[0, 8, 8, 0]} maxBarSize={32} animationDuration={800} />
-                    <Bar dataKey="actualHours" name="Heures réalisées" fill="url(#execBarActual)" radius={[0, 8, 8, 0]} maxBarSize={32} animationDuration={800} />
+                    <Bar dataKey="count" name="Nombre" fill="var(--primary)" radius={[8, 8, 0, 0]} maxBarSize={56} animationDuration={800} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -363,23 +345,43 @@ const ExecutiveDashboard = () => {
         </div>
       </DashboardWidgetGrid>
 
-      {/* Projets par statut */}
-      {projectsByStatusForChart.length > 0 && (
-        <div className="chart-card" style={{ marginBottom: '1.5rem' }}>
-          <h3>Projets par statut</h3>
+      {/* Charge de travail par équipe / membre */}
+      <div className="chart-card" style={{ marginBottom: '1.5rem' }}>
+        <h3>Charge de travail par équipe / membre</h3>
+        {workloadByTeam?.length > 0 ? (
           <div className="chart-card-inner">
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={projectsByStatusForChart} barCategoryGap={20} barGap={8} margin={{ top: 12, right: 20, bottom: 28, left: 12 }}>
-                <CartesianGrid strokeDasharray="4 4" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} height={40} />
-                <YAxis width={32} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+            <ResponsiveContainer width="100%" height={260}>
+              <BarChart
+                data={workloadByTeam}
+                layout="vertical"
+                margin={{ top: 16, right: 24, bottom: 16, left: 100 }}
+                barCategoryGap={24}
+                barGap={12}
+              >
+                <defs>
+                  <linearGradient id="execBarEstimated" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#0ea5e9" />
+                    <stop offset="100%" stopColor="#0369a1" />
+                  </linearGradient>
+                  <linearGradient id="execBarActual" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="var(--primary)" />
+                    <stop offset="100%" stopColor="var(--primary-hover, #c23d14)" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="4 4" horizontal={false} stroke="rgba(148, 163, 184, 0.25)" />
+                <XAxis type="number" tick={{ fontSize: 12, fill: 'var(--text-secondary)' }} allowDecimals={false} />
+                <YAxis type="category" dataKey="name" width={96} tick={{ fontSize: 12, fill: 'var(--text-primary)' }} />
                 <Tooltip content={renderChartTooltip} />
-                <Bar dataKey="count" name="Nombre" fill="var(--primary)" radius={[8, 8, 0, 0]} maxBarSize={56} animationDuration={800} />
+                <Legend wrapperStyle={{ paddingTop: 12 }} />
+                <Bar dataKey="estimatedHours" name="Heures estimées" fill="url(#execBarEstimated)" radius={[0, 8, 8, 0]} maxBarSize={32} animationDuration={800} />
+                <Bar dataKey="actualHours" name="Heures réalisées" fill="url(#execBarActual)" radius={[0, 8, 8, 0]} maxBarSize={32} animationDuration={800} />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      )}
+        ) : (
+          <p className="chart-empty">Aucune donnée</p>
+        )}
+      </div>
 
       {/* Analyser rentabilité : budget estimé vs réel */}
       <div id="rentabilite" className="table-section">

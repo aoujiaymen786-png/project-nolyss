@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { Eye, LayoutGrid, PlusCircle } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import API from '../../utils/api';
@@ -199,7 +200,7 @@ const ManagerDashboard = () => {
       <DashboardWidgetGrid storageKey="manager" defaultLayout={MANAGER_WIDGET_LAYOUT}>
         <div key="kpi-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="chart" />
             <div className="kpi-content">
               <h3>Projets actifs</h3>
@@ -209,7 +210,7 @@ const ManagerDashboard = () => {
         </div>
         <div key="kpi-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="warning" />
             <div className="kpi-content">
               <h3>Projets en retard</h3>
@@ -219,7 +220,7 @@ const ManagerDashboard = () => {
         </div>
         <div key="kpi-3" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="check" />
             <div className="kpi-content">
               <h3>Tâches en retard</h3>
@@ -229,7 +230,7 @@ const ManagerDashboard = () => {
         </div>
         <div key="kpi-4" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="trending" />
             <div className="kpi-content">
               <h3>Avancement global</h3>
@@ -239,7 +240,7 @@ const ManagerDashboard = () => {
         </div>
         <div key="kpi-5" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="users" />
             <div className="kpi-content">
               <h3>Charge équipe</h3>
@@ -249,7 +250,7 @@ const ManagerDashboard = () => {
         </div>
         <div key="kpi-6" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="clock" />
             <div className="kpi-content">
               <h3>Temps (estimé / consommé)</h3>
@@ -408,9 +409,9 @@ const ManagerDashboard = () => {
                     <td>{project.taskCount || 0}</td>
                     <td>{(project.deadline || project.endDate) ? new Date(project.deadline || project.endDate).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="manager-project-actions">
-                      <Link to={`/projects/${project._id}`}>Voir</Link>
-                      <Link to={`/projects/${project._id}/kanban`}>Kanban</Link>
-                      <Link to={`/projects/${project._id}/tasks/new`}>Nouvelle tâche</Link>
+                      <Link to={`/projects/${project._id}`} className="btn-icon" title="Voir"><Eye size={18} /></Link>
+                      <Link to={`/projects/${project._id}/kanban`} className="btn-icon" title="Kanban"><LayoutGrid size={18} /></Link>
+                      <Link to={`/projects/${project._id}/tasks/new`} className="btn-icon" title="Nouvelle tâche"><PlusCircle size={18} /></Link>
                     </td>
                   </tr>
                 ))}

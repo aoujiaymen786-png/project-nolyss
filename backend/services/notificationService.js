@@ -131,15 +131,67 @@ async function notifyRegistrationDecision(userId, approved) {
   });
 }
 
-/** Notifier direction : devis validé (accepté/refusé par directeur) - optionnel, peut être omis car c'est l'acteur qui fait l'action */
-/** Notifier client (User lié au Client) : facture disponible */
+/** Notifier client (User lié au Client) : facture disponible / envoyée */
 async function notifyClientInvoiceAvailable(invoice, clientId) {
   const clientUsers = await User.find({ client: clientId, role: 'client', isActive: true }).select('_id').lean();
   const userIds = clientUsers.map((u) => u._id);
   await createForUsers(userIds, {
     type: 'invoice_available',
     title: 'Nouvelle facture',
-    message: `Une facture (${invoice.number}) est disponible pour consultation.`,
+    message: `Une facture (${invoice.number}) vous a été envoyée. Vous pouvez la consulter et la régler depuis votre espace client.`,
+    link: '/client',
+    metadata: { invoiceId: invoice._id },
+  });
+}
+
+/** Notifier client : devis envoyé */
+async function notifyClientQuoteSent(quote, clientId) {
+  const clientUsers = await User.find({ client: clientId, role: 'client', isActive: true }).select('_id').lean();
+  const userIds = clientUsers.map((u) => u._id);
+  await createForUsers(userIds, {
+    type: 'quote_sent',
+    title: 'Devis envoyé',
+    message: `Un devis (${quote.number}) vous a été envoyé. Vous pouvez le consulter et le valider depuis votre espace client.`,
+    link: '/client',
+    metadata: { quoteId: quote._id },
+  });
+}
+
+/** Notifier client : rappel devis */
+async function notifyClientQuoteReminder(quote, clientId) {
+  const clientUsers = await User.find({ client: clientId, role: 'client', isActive: true }).select('_id').lean();
+  const userIds = clientUsers.map((u) => u._id);
+  await createForUsers(userIds, {
+    type: 'quote_reminder',
+    title: 'Rappel devis',
+    message: `Un rappel vous a été envoyé concernant le devis ${quote.number}. Merci de le consulter et de nous faire part de votre décision.`,
+    link: '/client',
+    metadata: { quoteId: quote._id },
+  });
+}
+
+/** Notifier client : rappel facture */
+async function notifyClientInvoiceReminder(invoice, clientId) {
+  const clientUsers = await User.find({ client: clientId, role: 'client', isActive: true }).select('_id').lean();
+  const userIds = clientUsers.map((u) => u._id);
+  const remaining = (invoice.totalTTC || 0) - (invoice.paidAmount || 0);
+  await createForUsers(userIds, {
+    type: 'invoice_reminder',
+    title: 'Rappel facture',
+    message: `Un rappel vous a été envoyé concernant la facture ${invoice.number} (solde restant : ${remaining.toFixed(2)} TND). Vous pouvez la régler depuis votre espace client.`,
+    link: '/client',
+    metadata: { invoiceId: invoice._id },
+  });
+}
+
+/** Notifier client : paiement enregistré */
+async function notifyClientPaymentRecorded(invoice, clientId, amount) {
+  const clientUsers = await User.find({ client: clientId, role: 'client', isActive: true }).select('_id').lean();
+  const userIds = clientUsers.map((u) => u._id);
+  await createForUsers(userIds, {
+    type: 'payment_recorded',
+    title: 'Paiement enregistré',
+    message: `Votre paiement de ${Number(amount).toFixed(2)} TND pour la facture ${invoice.number} a été enregistré.`,
     link: '/client',
     metadata: { invoiceId: invoice._id },
   });
@@ -169,5 +221,9 @@ module.exports = {
   notifyClaimCreated,
   notifyRegistrationDecision,
   notifyClientInvoiceAvailable,
+  notifyClientQuoteSent,
+  notifyClientQuoteReminder,
+  notifyClientInvoiceReminder,
+  notifyClientPaymentRecorded,
   notifyProjectCompleted,
 };

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
+import { Eye, Pencil, Trash2 } from 'lucide-react';
 import API from '../../utils/api';
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
@@ -98,26 +99,21 @@ const TaskList = ({ projectId }) => {
                   <td>{task.assignedTo && task.assignedTo.length > 0 ? task.assignedTo.map((u) => u.name).join(', ') : '–'}</td>
                   <td>{task.estimatedHours != null ? task.estimatedHours : '–'} / {task.actualHours != null ? task.actualHours : '–'}</td>
                   <td>{task.dueDate ? new Date(task.dueDate).toLocaleDateString('fr-FR') : '–'}</td>
-                  <td>
-                    <button type="button" className="btn-link" onClick={() => setDetailTaskId(task._id)}>Voir</button>
+                  <td className="task-list-actions-cell">
+                    <button type="button" className="btn-icon" onClick={() => setDetailTaskId(task._id)} title="Voir"><Eye size={18} /></button>
                     {canEditTask(task) && (
-                      <>
-                        {' '}
-                        <Link to={`/tasks/edit/${task._id}`}>Modifier</Link>
-                      </>
+                      <Link to={`/tasks/edit/${task._id}`} className="btn-icon" title="Modifier"><Pencil size={18} /></Link>
                     )}
                     {canDelete && (
-                      <>
-                        {' '}
-                        <button
-                          type="button"
-                          className="btn-link task-list-delete"
-                          onClick={() => handleDelete(task._id)}
-                          disabled={deletingId === task._id}
-                        >
-                          {deletingId === task._id ? 'Suppression…' : 'Supprimer'}
-                        </button>
-                      </>
+                      <button
+                        type="button"
+                        className="btn-icon btn-danger"
+                        onClick={() => handleDelete(task._id)}
+                        disabled={deletingId === task._id}
+                        title={deletingId === task._id ? 'Suppression…' : 'Supprimer'}
+                      >
+                        <Trash2 size={18} />
+                      </button>
                     )}
                   </td>
                 </tr>

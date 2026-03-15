@@ -3,6 +3,7 @@ const QuoteTemplate = require('../models/QuoteTemplate');
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const SystemSettings = require('../models/SystemSettings');
+const notificationService = require('../services/notificationService');
 
 const generateQuoteNumber = async (customPrefix) => {
   const prefix = customPrefix || 'DEV';
@@ -85,8 +86,19 @@ const updateQuote = async (req, res) => {
     if (quote.status !== 'draft') {
       return res.status(400).json({ message: 'Impossible de modifier un devis non brouillon' });
     }
+    const wasDraft = quote.status === 'draft';
     Object.assign(quote, req.body);
     const updatedQuote = await quote.save();
+    if (wasDraft && updatedQuote.status === 'sent') {
+      try {
+        const clientId = updatedQuote.client?._id ?? updatedQuote.client;
+        if (clientId) {
+          await notificationService.notifyClientQuoteSent(updatedQuote, clientId);
+        }
+      } catch (e) {
+        console.error('Notification client devis envoyé:', e);
+      }
+    }
     res.json(updatedQuote);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -149,6 +161,15 @@ const sendQuoteReminder = async (req, res) => {
     quote.remindersSent = (quote.remindersSent || 0) + 1;
     quote.lastReminderAt = new Date();
     await quote.save();
+
+    try {
+      const clientId = quote.client?._id ?? quote.client;
+      if (clientId) {
+        await notificationService.notifyClientQuoteReminder(quote, clientId);
+      }
+    } catch (e) {
+      console.error('Notification client rappel devis:', e);
+    }
 
     res.json({ message: 'Relance envoyée au client', remindersSent: quote.remindersSent });
   } catch (error) {

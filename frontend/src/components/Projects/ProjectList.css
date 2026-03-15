@@ -168,23 +168,42 @@
 .priority-medium { background: rgba(245, 158, 11, 0.15); }
 .priority-high { background: rgba(239, 68, 68, 0.15); }
 
-.actions-cell a,
-.actions-cell .btn-delete {
-  margin-right: 0.75rem;
-  font-size: 0.9rem;
+.actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
-.actions-cell a {
-  color: var(--primary);
-  text-decoration: none;
-}
-
-.actions-cell .btn-delete {
-  background: none;
-  border: none;
-  color: #dc2626;
-  cursor: pointer;
+.actions-cell .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(223, 48, 0, 0.1);
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.actions-cell .btn-icon:hover {
+  background: rgba(223, 48, 0, 0.25);
+  color: var(--primary);
+}
+
+.actions-cell .btn-icon.btn-danger {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.actions-cell .btn-icon.btn-danger:hover {
+  background: rgba(220, 38, 38, 0.2);
+  color: #b91c1c;
 }
 
 .empty-row {
@@ -250,15 +269,31 @@
 }
 
 .project-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   padding-top: 0.75rem;
   border-top: 1px solid rgba(122, 122, 122, 0.1);
 }
 
-.project-card-actions a {
-  margin-right: 0.75rem;
+.project-card-actions .btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: rgba(223, 48, 0, 0.1);
   color: var(--primary);
   text-decoration: none;
-  font-size: 0.9rem;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.project-card-actions .btn-icon:hover {
+  background: rgba(223, 48, 0, 0.25);
+  color: var(--primary);
 }
 
 .project-calendar {

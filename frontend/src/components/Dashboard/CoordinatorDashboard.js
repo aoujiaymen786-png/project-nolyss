@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Eye, Pencil, LayoutGrid } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import API from '../../utils/api';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
@@ -148,27 +149,27 @@ const CoordinatorDashboard = () => {
       <DashboardWidgetGrid storageKey="coordinator" defaultLayout={COORDINATOR_WIDGET_LAYOUT}>
         <div key="kpi-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card"><KpiIcon name="folder" /><div className="kpi-content"><h3>Projets actifs</h3><p className="kpi-value">{kpis.totalActiveProjects ?? 0}</p></div></div>
+          <div className="kpi-card kpi-widget"><KpiIcon name="folder" /><div className="kpi-content"><h3>Projets actifs</h3><p className="kpi-value">{kpis.totalActiveProjects ?? 0}</p></div></div>
         </div>
         <div key="kpi-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card"><KpiIcon name="warning" /><div className="kpi-content"><h3>Projets en retard</h3><p className="kpi-value">{kpis.overdueProjects ?? 0}</p></div></div>
+          <div className="kpi-card kpi-widget"><KpiIcon name="warning" /><div className="kpi-content"><h3>Projets en retard</h3><p className="kpi-value">{kpis.overdueProjects ?? 0}</p></div></div>
         </div>
         <div key="kpi-3" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card"><KpiIcon name="clock" /><div className="kpi-content"><h3>Proches deadline</h3><p className="kpi-value">{kpis.nearDeadlineProjects ?? 0}</p></div></div>
+          <div className="kpi-card kpi-widget"><KpiIcon name="clock" /><div className="kpi-content"><h3>Proches deadline</h3><p className="kpi-value">{kpis.nearDeadlineProjects ?? 0}</p></div></div>
         </div>
         <div key="kpi-4" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card"><KpiIcon name="users" /><div className="kpi-content"><h3>Charge globale</h3><p className="kpi-value">{kpis.globalTeamLoad ?? 0}</p></div></div>
+          <div className="kpi-card kpi-widget"><KpiIcon name="users" /><div className="kpi-content"><h3>Charge globale</h3><p className="kpi-value">{kpis.globalTeamLoad ?? 0}</p></div></div>
         </div>
         <div key="kpi-5" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card"><KpiIcon name="chart" /><div className="kpi-content"><h3>Taux occupation</h3><p className="kpi-value">{kpis.occupancyRate ?? 0}%</p></div></div>
+          <div className="kpi-card kpi-widget"><KpiIcon name="chart" /><div className="kpi-content"><h3>Taux occupation</h3><p className="kpi-value">{kpis.occupancyRate ?? 0}%</p></div></div>
         </div>
         <div key="kpi-6" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card"><KpiIcon name="clock" /><div className="kpi-content"><h3>Temps (estimé/réel)</h3><p className="kpi-value">{kpis.estimatedHours ?? 0}h / {kpis.consumedHours ?? 0}h</p></div></div>
+          <div className="kpi-card kpi-widget"><KpiIcon name="clock" /><div className="kpi-content"><h3>Temps (estimé/réel)</h3><p className="kpi-value">{kpis.estimatedHours ?? 0}h / {kpis.consumedHours ?? 0}h</p></div></div>
         </div>
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
@@ -266,9 +267,9 @@ const CoordinatorDashboard = () => {
                     <td>{p.progress ?? 0}%</td>
                     <td>{p.deadline ? new Date(p.deadline).toLocaleDateString('fr-FR') : '—'}</td>
                     <td className="manager-project-actions">
-                      <Link to={`/projects/${p._id}`}>Voir</Link>
-                      <Link to={`/projects/edit/${p._id}`}>Modifier</Link>
-                      <Link to={`/projects/${p._id}/kanban`}>Kanban</Link>
+                      <Link to={`/projects/${p._id}`} className="btn-icon" title="Voir"><Eye size={18} /></Link>
+                      <Link to={`/projects/edit/${p._id}`} className="btn-icon" title="Modifier"><Pencil size={18} /></Link>
+                      <Link to={`/projects/${p._id}/kanban`} className="btn-icon" title="Kanban"><LayoutGrid size={18} /></Link>
                     </td>
                   </tr>
                 ))}

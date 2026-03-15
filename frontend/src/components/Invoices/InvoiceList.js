@@ -190,9 +190,14 @@ const InvoiceList = () => {
                       {reminderLoadingId === invoice._id ? '…' : <Mail size={16} />}
                     </button>
                   )}
-                  {['draft', 'cancelled'].includes(invoice.status) && (
-                    <button type="button" onClick={() => handleDelete(invoice._id)} className="btn-icon btn-danger" title="Supprimer"><Trash2 size={16} /></button>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(invoice._id)}
+                    className="btn-icon btn-danger"
+                    title="Supprimer la facture"
+                  >
+                    <Trash2 size={16} />
+                  </button>
                 </td>
               </tr>
             ))}

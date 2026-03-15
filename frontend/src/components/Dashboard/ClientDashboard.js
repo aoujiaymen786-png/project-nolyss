@@ -84,7 +84,7 @@ const ClientDashboard = () => {
       <DashboardWidgetGrid storageKey="client" defaultLayout={CLIENT_WIDGET_LAYOUT}>
         <div key="kpi-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="folder" />
             <div className="kpi-content">
               <h3>Mes Projets</h3>
@@ -94,7 +94,7 @@ const ClientDashboard = () => {
         </div>
         <div key="kpi-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="file" />
             <div className="kpi-content">
               <h3>Factures</h3>
@@ -104,7 +104,7 @@ const ClientDashboard = () => {
         </div>
         <div key="kpi-3" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="wallet" />
             <div className="kpi-content">
               <h3>Montant Total</h3>
@@ -114,7 +114,7 @@ const ClientDashboard = () => {
         </div>
         <div key="kpi-4" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="kpi-card">
+          <div className="kpi-card kpi-widget">
             <KpiIcon name="check" />
             <div className="kpi-content">
               <h3>Payé</h3>
