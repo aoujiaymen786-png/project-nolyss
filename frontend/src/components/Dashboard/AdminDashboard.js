@@ -4,6 +4,8 @@ import API from '../../utils/api';
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
+import DonutCenterLabel from './DonutCenterLabel';
+import { PROJECT_STATUS_COLORS, PROJECT_STATUS_ORDER, sortByKeyOrder } from './chartTheme';
 import './Dashboard.css';
 
 const ADMIN_WIDGET_LAYOUT = [
@@ -52,26 +54,52 @@ const AdminDashboard = () => {
   const { user } = useContext(AuthContext);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [activeProjectStatusIndex, setActiveProjectStatusIndex] = useState(null);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    let mounted = true;
+    const fetchStats = async (opts = { silent: false }) => {
+      const silent = !!opts?.silent;
       try {
+        if (!silent) setLoading(true);
+        else setRefreshing(true);
         const { data } = await API.get('/dashboard/admin-stats');
-        setStats(data);
-        setLoading(false);
+        if (mounted) setStats(data);
       } catch (error) {
         console.error('Erreur stats:', error);
-        setLoading(false);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     };
+
     fetchStats();
+
+    const onFocus = () => fetchStats({ silent: true });
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchStats({ silent: true });
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    const intervalId = setInterval(() => fetchStats({ silent: true }), 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   if (loading) return <div className="dashboard-loading">Chargement...</div>;
   if (!stats) return <div className="dashboard-error">Erreur lors du chargement</div>;
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(255, 145, 37)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)', 'rgb(114, 224, 232)'];
+  const projectsByStatusSorted = sortByKeyOrder(stats?.projects?.byStatus || [], '_id', PROJECT_STATUS_ORDER)
+    .map((e) => ({ ...e, label: PROJECT_STATUS_LABELS[e._id] || e._id }));
 
   const renderChartTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
@@ -102,7 +130,8 @@ const AdminDashboard = () => {
             <KpiIcon name="users" />
             <div className="kpi-content">
               <h3>Utilisateurs Actifs</h3>
-              <p className="kpi-value">{stats.totalUsers || 0}</p>
+              <p className="kpi-value">{stats.activeUsers ?? stats.totalUsers ?? 0}</p>
+              {refreshing && <p className="kpi-subvalue">Mise à jour…</p>}
             </div>
           </div>
         </div>
@@ -138,37 +167,40 @@ const AdminDashboard = () => {
         </div>
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card">
+          <div className="chart-card chart-card-donut chart-card--compact">
             <h3>Statut des Projets</h3>
             {stats.projects && stats.projects.byStatus && stats.projects.byStatus.length > 0 ? (
-              <ResponsiveContainer width="100%" height={340}>
+              <ResponsiveContainer width="100%" height={250}>
                 <PieChart>
-                  <defs>
-                    <linearGradient id="adminPieGradient" x1="0" y1="0" x2="1" y2="1">
-                      <stop offset="0%" stopColor="#f97316" />
-                      <stop offset="50%" stopColor="#ef4444" />
-                      <stop offset="100%" stopColor="#7c3aed" />
-                    </linearGradient>
-                  </defs>
                   <Pie
-                    data={stats.projects.byStatus.map((e) => ({ ...e, label: PROJECT_STATUS_LABELS[e._id] || e._id }))}
+                    data={projectsByStatusSorted}
                     dataKey="count"
                     nameKey="label"
                     cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={115}
+                    cy="46%"
+                    innerRadius={54}
+                    outerRadius={86}
                     paddingAngle={2}
-                    label
+                    label={false}
                     isAnimationActive
                     animationDuration={800}
                     activeIndex={activeProjectStatusIndex}
                     onMouseEnter={(_, index) => setActiveProjectStatusIndex(index)}
                   >
-                    {stats.projects.byStatus.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={['#f97316', '#ef4444', '#7c3aed', '#0ea5e9', '#22c55e'][index % 5]} />
+                    {projectsByStatusSorted.map((entry, index) => (
+                      <Cell
+                        key={`cell-${entry._id || index}`}
+                        fill={PROJECT_STATUS_COLORS[entry._id] || COLORS[index % COLORS.length]}
+                      />
                     ))}
                   </Pie>
+                  <DonutCenterLabel
+                    data={projectsByStatusSorted}
+                    activeIndex={activeProjectStatusIndex}
+                    activeColor={PROJECT_STATUS_COLORS[projectsByStatusSorted[activeProjectStatusIndex ?? 0]?._id]}
+                    cx="50%"
+                    cy="46%"
+                  />
                   <Tooltip content={renderChartTooltip} />
                   <Legend />
                 </PieChart>

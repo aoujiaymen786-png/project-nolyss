@@ -5,6 +5,8 @@ import API from '../../utils/api';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
+import DonutCenterLabel from './DonutCenterLabel';
+import { PROJECT_STATUS_COLORS, PROJECT_STATUS_ORDER, sortByKeyOrder } from './chartTheme';
 import './Dashboard.css';
 
 const COORDINATOR_WIDGET_LAYOUT = [
@@ -88,6 +90,8 @@ const CoordinatorDashboard = () => {
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)', 'rgb(255, 145, 37)', 'rgb(114, 224, 232)'];
   const kpis = data.kpis || {};
+  const projectsByStatusSorted = sortByKeyOrder(data.projectsByStatus || [], '_id', PROJECT_STATUS_ORDER)
+    .map((s) => ({ ...s, label: STATUS_LABELS[s._id] || s._id }));
 
   const renderChartTooltip = ({ active, payload, label }) => {
     if (!active || !payload || !payload.length) return null;
@@ -173,34 +177,40 @@ const CoordinatorDashboard = () => {
         </div>
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card chart-card-coordinator-pie">
+          <div className="chart-card chart-card-coordinator-pie chart-card-donut chart-card--compact">
             <h3>Répartition des projets actifs</h3>
             {(data.projectsByStatus || []).length > 0 ? (
               <div className="chart-card-inner chart-card-inner-pie">
-                <ResponsiveContainer width="100%" height={340} minHeight={320}>
-                  <PieChart margin={{ top: 20, right: 24, bottom: 64, left: 24 }}>
+                <ResponsiveContainer width="100%" height={250} minHeight={220}>
+                  <PieChart margin={{ top: 10, right: 14, bottom: 40, left: 14 }}>
                     <Pie
-                      data={data.projectsByStatus.map((s) => ({ ...s, label: STATUS_LABELS[s._id] || s._id }))}
+                      data={projectsByStatusSorted}
                       dataKey="count"
                       nameKey="label"
                       cx="50%"
-                      cy="42%"
+                      cy="43%"
                       innerRadius={52}
-                      outerRadius={80}
+                      outerRadius={82}
                       paddingAngle={2}
                       stroke="var(--surface)"
                       strokeWidth={2}
-                      label={({ label, percent }) => (percent >= 0.01 ? `${label} ${(percent * 100).toFixed(0)}%` : '')}
-                      labelLine={{ stroke: 'var(--text-secondary)', strokeWidth: 1 }}
+                      label={false}
                       isAnimationActive
                       animationDuration={800}
                       activeIndex={activeProjectSlice}
                       onMouseEnter={(_, index) => setActiveProjectSlice(index)}
                     >
-                      {(data.projectsByStatus || []).map((entry, idx) => (
-                        <Cell key={entry._id || idx} fill={['#94a3b8', '#f59e0b', '#0ea5e9', '#8b5cf6', '#22c55e', '#64748b'][idx % 6]} />
+                      {projectsByStatusSorted.map((entry, idx) => (
+                        <Cell key={entry._id || idx} fill={PROJECT_STATUS_COLORS[entry._id] || COLORS[idx % COLORS.length]} />
                       ))}
                     </Pie>
+                    <DonutCenterLabel
+                      data={projectsByStatusSorted}
+                      activeIndex={activeProjectSlice}
+                      activeColor={PROJECT_STATUS_COLORS[projectsByStatusSorted[activeProjectSlice ?? 0]?._id]}
+                      cx="50%"
+                      cy="43%"
+                    />
                     <Tooltip content={renderChartTooltip} />
                     <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 12, paddingBottom: 4 }} />
                   </PieChart>

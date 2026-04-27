@@ -13,6 +13,7 @@ const {
   createIntegration,
   updateIntegration,
   deleteIntegration,
+  testIntegration,
   getWorkflows,
   createWorkflow,
   updateWorkflow,
@@ -44,6 +45,7 @@ router.get('/integrations', getIntegrations);
 router.post('/integrations', authorize('MANAGE_INTEGRATIONS'), createIntegration);
 router.put('/integrations/:id', authorize('MANAGE_INTEGRATIONS'), updateIntegration);
 router.delete('/integrations/:id', authorize('MANAGE_INTEGRATIONS'), deleteIntegration);
+router.post('/integrations/:id/test', authorize('MANAGE_INTEGRATIONS'), testIntegration);
 
 // Workflows
 router.get('/workflows', getWorkflows);

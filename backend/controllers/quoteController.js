@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
 const SystemSettings = require('../models/SystemSettings');
 const notificationService = require('../services/notificationService');
+const integrationService = require('../services/integrationService');
 
 const generateQuoteNumber = async (customPrefix) => {
   const prefix = customPrefix || 'DEV';
@@ -43,6 +44,31 @@ const createQuote = async (req, res) => {
       createdBy: req.user._id,
     });
     const createdQuote = await quote.save();
+    if (createdQuote.status === 'sent') {
+      try {
+        await notificationService.notifyQuotePendingValidation(createdQuote, req.user._id);
+        const clientId = createdQuote.client?._id ?? createdQuote.client;
+        if (clientId) {
+          await notificationService.notifyClientQuoteSent(createdQuote, clientId);
+        }
+      } catch (e) {
+        console.error('Notification client devis envoyé (create):', e);
+      }
+      try {
+        await integrationService.triggerIntegrations('quote.sent', {
+          quoteId: createdQuote._id,
+          quoteNumber: createdQuote.number,
+          clientId: createdQuote.client || null,
+          totalTTC: createdQuote.totalTTC || 0,
+          status: createdQuote.status,
+        }, {
+          triggeredBy: req.user._id,
+          source: 'quoteController.createQuote',
+        });
+      } catch (e) {
+        console.error('Intégration webhook devis envoyé (create):', e);
+      }
+    }
     res.status(201).json(createdQuote);
   } catch (error) {
     res.status(400).json({ message: error.message });
@@ -86,17 +112,40 @@ const updateQuote = async (req, res) => {
     if (quote.status !== 'draft') {
       return res.status(400).json({ message: 'Impossible de modifier un devis non brouillon' });
     }
+    const previousStatus = quote.status;
     const wasDraft = quote.status === 'draft';
     Object.assign(quote, req.body);
     const updatedQuote = await quote.save();
+    if (previousStatus !== updatedQuote.status) {
+      try {
+        await notificationService.notifyQuoteStatusChanged(updatedQuote, previousStatus, updatedQuote.status, req.user._id);
+      } catch (e) {
+        console.error('Notification changement statut devis:', e);
+      }
+    }
     if (wasDraft && updatedQuote.status === 'sent') {
       try {
+        await notificationService.notifyQuotePendingValidation(updatedQuote, req.user._id);
         const clientId = updatedQuote.client?._id ?? updatedQuote.client;
         if (clientId) {
           await notificationService.notifyClientQuoteSent(updatedQuote, clientId);
         }
       } catch (e) {
         console.error('Notification client devis envoyé:', e);
+      }
+      try {
+        await integrationService.triggerIntegrations('quote.sent', {
+          quoteId: updatedQuote._id,
+          quoteNumber: updatedQuote.number,
+          clientId: updatedQuote.client || null,
+          totalTTC: updatedQuote.totalTTC || 0,
+          status: updatedQuote.status,
+        }, {
+          triggeredBy: req.user._id,
+          source: 'quoteController.updateQuote',
+        });
+      } catch (e) {
+        console.error('Intégration webhook devis envoyé:', e);
       }
     }
     res.json(updatedQuote);
@@ -229,8 +278,14 @@ const validateQuote = async (req, res) => {
     if (!['accept', 'refuse'].includes(action)) {
       return res.status(400).json({ message: 'Action invalide (accept ou refuse)' });
     }
+    const previousStatus = quote.status;
     quote.status = action === 'accept' ? 'accepted' : 'refused';
     await quote.save();
+    try {
+      await notificationService.notifyQuoteStatusChanged(quote, previousStatus, quote.status, req.user._id);
+    } catch (e) {
+      console.error('Notification validation devis:', e);
+    }
     res.json(quote);
   } catch (error) {
     res.status(500).json({ message: error.message });

@@ -77,6 +77,8 @@ const Integrations = () => {
   const [providerModal, setProviderModal] = useState(null);
   const [form, setForm] = useState({ name: '', type: 'webhook', isActive: true, webhookUrl: '', events: [] });
   const [providerForm, setProviderForm] = useState({ name: '', provider: '', category: '', isActive: true, config: {}, webhookUrl: '' });
+  const [testingId, setTestingId] = useState('');
+  const [testResults, setTestResults] = useState({});
 
   useEffect(() => {
     const fetch = async () => {
@@ -169,7 +171,8 @@ const Integrations = () => {
       if (modal === 'create') {
         await API.post('/admin/integrations', { ...form, type: 'webhook' });
       } else {
-        await API.put(`/admin/integrations/${form._id}`, form);
+        const { _id, ...payload } = form;
+        await API.put(`/admin/integrations/${form._id}`, payload);
       }
       setModal(null);
       const { data } = await API.get('/admin/integrations');
@@ -186,6 +189,28 @@ const Integrations = () => {
       setList(list.filter((i) => i._id !== id));
     } catch (err) {
       alert(err.response?.data?.message || 'Erreur');
+    }
+  };
+
+  const handleTestIntegration = async (integrationId) => {
+    if (!integrationId) return;
+    try {
+      setTestingId(integrationId);
+      const { data } = await API.post(`/admin/integrations/${integrationId}/test`);
+      setTestResults((prev) => ({
+        ...prev,
+        [integrationId]: { ok: true, message: data.message },
+      }));
+      alert(data.message || 'Test réussi.');
+    } catch (err) {
+      const message = err.response?.data?.message || 'Échec du test de connexion.';
+      setTestResults((prev) => ({
+        ...prev,
+        [integrationId]: { ok: false, message },
+      }));
+      alert(message);
+    } finally {
+      setTestingId('');
     }
   };
 
@@ -221,6 +246,7 @@ const Integrations = () => {
                 <div className="integration-providers">
                   {cat.providers.map((prov) => {
                     const configured = prov.id === 'webhook' ? customWebhooks.length > 0 : getConfigured(prov.id);
+                    const test = configured?._id ? testResults[configured._id] : null;
                     return (
                       <div
                         key={prov.id}
@@ -235,7 +261,25 @@ const Integrations = () => {
                           {prov.id === 'webhook' ? (
                             <span className="status-badge">{customWebhooks.length} webhook(s)</span>
                           ) : configured ? (
-                            <span className="status-badge active">Configuré</span>
+                            <div className="integration-status-stack">
+                              <span className="status-badge active">Configuré</span>
+                              {test ? (
+                                <span className={`status-badge ${test.ok ? 'status-test-ok' : 'status-test-ko'}`}>
+                                  {test.ok ? 'Test OK' : 'Test KO'}
+                                </span>
+                              ) : null}
+                              <button
+                                type="button"
+                                className="btn-sm integration-test-btn"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleTestIntegration(configured._id);
+                                }}
+                                disabled={testingId === configured._id}
+                              >
+                                {testingId === configured._id ? 'Test...' : 'Tester'}
+                              </button>
+                            </div>
                           ) : (
                             <span className="status-badge">Non configuré</span>
                           )}
@@ -275,6 +319,14 @@ const Integrations = () => {
                       <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.webhookUrl || '-'}</td>
                       <td>
                         <button type="button" className="btn-sm" onClick={() => openEdit(item)}>Modifier</button>
+                        <button
+                          type="button"
+                          className="btn-sm integration-test-btn"
+                          onClick={() => handleTestIntegration(item._id)}
+                          disabled={testingId === item._id}
+                        >
+                          {testingId === item._id ? 'Test...' : 'Tester'}
+                        </button>
                         <button type="button" className="btn-sm btn-danger" onClick={() => handleDelete(item._id)}>Supprimer</button>
                       </td>
                     </tr>
@@ -334,6 +386,16 @@ const Integrations = () => {
               </div>
               <div className="admin-modal-actions">
                 <button type="button" className="btn-secondary" onClick={() => setProviderModal(null)}>Annuler</button>
+                {providerForm._id ? (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    onClick={() => handleTestIntegration(providerForm._id)}
+                    disabled={testingId === providerForm._id}
+                  >
+                    {testingId === providerForm._id ? 'Test...' : 'Tester la connexion'}
+                  </button>
+                ) : null}
                 <button type="submit" className="btn-primary">Enregistrer</button>
               </div>
             </form>

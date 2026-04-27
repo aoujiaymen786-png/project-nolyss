@@ -234,6 +234,37 @@
   gap: 2px;
 }
 
+.navbar-notification-toprow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.navbar-notification-delete {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.navbar-notification-delete:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-primary);
+}
+
+::root.dark-mode .navbar-notification-delete:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 .navbar-notification-item-unread {
   background: rgba(var(--primary-rgb, 223, 48, 0), 0.06);
 }

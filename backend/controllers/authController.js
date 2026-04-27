@@ -4,29 +4,40 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { logAudit, getRequestMeta } = require('../utils/auditLog');
+const notificationService = require('../services/notificationService');
 
 // Rôles soumis à validation d'inscription par l'admin (nouvelle inscription uniquement)
 const ROLES_REQUIRING_APPROVAL = ['director', 'coordinator', 'projectManager', 'teamMember'];
+const VALID_ROLES = ['admin', 'director', 'coordinator', 'projectmanager', 'teammember', 'client'];
+
+const normalizeRole = (role) => {
+  const normalized = String(role || '').trim().toLowerCase();
+  if (normalized === 'projectmanager') return 'projectManager';
+  if (normalized === 'teammember') return 'teamMember';
+  if (VALID_ROLES.includes(normalized)) return normalized;
+  return null;
+};
 
 // @desc    Inscription
 // @route   POST /api/auth/register
 // @access  Public
 const registerUser = async (req, res) => {
   const { name, email, password, phone, role } = req.body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const normalizedRole = normalizeRole(role || 'teamMember') || 'teamMember';
 
-  const userExists = await User.findOne({ email });
+  const userExists = await User.findOne({ email: normalizedEmail });
   if (userExists) {
     return res.status(400).json({ message: 'Utilisateur déjà existant' });
   }
 
-  const normalizedRole = (role || 'teamMember').trim();
   const requiresApproval = ROLES_REQUIRING_APPROVAL.includes(normalizedRole);
 
   const verificationToken = crypto.randomBytes(32).toString('hex');
 
   const userData = {
     name,
-    email,
+    email: normalizedEmail,
     phone,
     password,
     role: normalizedRole,
@@ -36,12 +47,19 @@ const registerUser = async (req, res) => {
 
   if (requiresApproval) {
     userData.registrationStatus = 'pending';
+    // Ne pas activer un compte tant qu'il n'est pas validé
+    userData.isActive = false;
   }
 
   const user = await User.create(userData);
 
   if (user) {
     if (requiresApproval) {
+      try {
+        await notificationService.notifyAdminRegistrationPending(user);
+      } catch (e) {
+        console.error('Notification admin inscription en attente:', e);
+      }
       return res.status(201).json({
         _id: user._id,
         name: user.name,
@@ -101,9 +119,16 @@ const registerUser = async (req, res) => {
 // @access  Public
 const loginUser = async (req, res) => {
   const { email, password } = req.body;
+  const normalizedEmail = String(email || '').trim().toLowerCase();
 
-  const user = await User.findOne({ email });
+  const user = await User.findOne({ email: normalizedEmail });
   if (!user) return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
+
+  // Compatibilité avec d'anciens jeux de données stockant "Admin" au lieu de "admin".
+  const normalizedUserRole = normalizeRole(user.role);
+  if (normalizedUserRole && user.role !== normalizedUserRole) {
+    user.role = normalizedUserRole;
+  }
 
   if (!(await user.matchPassword(password))) {
     return res.status(401).json({ message: 'Email ou mot de passe incorrect' });

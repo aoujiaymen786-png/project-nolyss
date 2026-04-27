@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Sun, Moon, Bell, LogOut } from 'lucide-react';
+import { Sun, Moon, Bell, LogOut, X } from 'lucide-react';
 import { AuthContext } from '../../contexts/AuthContext';
 import { ThemeContext } from '../../contexts/ThemeContext';
 import API from '../../utils/api';
@@ -62,6 +62,20 @@ const Navbar = () => {
       } catch (e) {
         console.error('Marquer notification lue:', e);
       }
+    }
+  };
+
+  const handleDeleteNotification = async (e, n) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!n?._id) return;
+    try {
+      const { data } = await API.delete(`/notifications/${n._id}`);
+      setNotifications((prev) => prev.filter((x) => x._id !== n._id));
+      if (typeof data?.unreadCount === 'number') setUnreadCount(data.unreadCount);
+      else if (!n.read) setUnreadCount((c) => Math.max(0, c - 1));
+    } catch (err) {
+      console.error('Suppression notification:', err);
     }
   };
 
@@ -136,7 +150,18 @@ const Navbar = () => {
                             onClick={() => handleNotificationClick(n)}
                             onKeyDown={(e) => e.key === 'Enter' && handleNotificationClick(n)}
                           >
-                            <span className="navbar-notification-title">{n.title || 'Notification'}</span>
+                            <div className="navbar-notification-toprow">
+                              <span className="navbar-notification-title">{n.title || 'Notification'}</span>
+                              <button
+                                type="button"
+                                className="navbar-notification-delete"
+                                aria-label="Supprimer la notification"
+                                title="Supprimer"
+                                onClick={(e) => handleDeleteNotification(e, n)}
+                              >
+                                <X size={16} />
+                              </button>
+                            </div>
                             {n.message && <span className="navbar-notification-message">{n.message}</span>}
                           </div>
                         ))

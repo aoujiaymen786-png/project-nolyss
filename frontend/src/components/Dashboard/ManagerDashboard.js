@@ -6,6 +6,8 @@ import API from '../../utils/api';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
+import DonutCenterLabel from './DonutCenterLabel';
+import { TASK_STATUS_COLORS, TASK_STATUS_ORDER, sortByKeyOrder } from './chartTheme';
 import './Dashboard.css';
 
 const MANAGER_WIDGET_LAYOUT = [
@@ -66,18 +68,10 @@ const ManagerDashboard = () => {
   if (!stats) return <div className="dashboard-error">Erreur lors du chargement</div>;
 
   const COLORS = ['rgb(223, 48, 0)', 'rgb(255, 145, 37)', 'rgb(0, 67, 115)', 'rgb(20, 163, 214)', 'rgb(114, 224, 232)'];
-  const tasksByStatusForChart = (stats.tasksByStatus || []).map((s) => ({
+  const tasksByStatusForChart = sortByKeyOrder(stats.tasksByStatus || [], '_id', TASK_STATUS_ORDER).map((s) => ({
     ...s,
     label: TASK_STATUS_LABELS[s._id] || s._id,
   }));
-
-  // Couleurs distinctes par statut de tâche (À faire, En cours, En review, Terminé)
-  const TASK_STATUS_COLORS = {
-    todo: '#64748b',
-    inProgress: '#0ea5e9',
-    review: '#f59e0b',
-    done: '#22c55e',
-  };
 
   // Répartition des projets par statut : tous les statuts affichés (données complètes et distinctes)
   const ALL_PROJECT_STATUSES = ['prospecting', 'quotation', 'inProgress', 'validation', 'completed', 'archived'];
@@ -283,25 +277,24 @@ const ManagerDashboard = () => {
         </div>
         <div key="chart-2" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card">
+          <div className="chart-card chart-card-donut chart-card--compact">
             <h3>Tâches par statut</h3>
             {tasksByStatusForChart.length > 0 ? (
               <div className="chart-card-inner">
-                <ResponsiveContainer width="100%" height={280}>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                     <Pie
                       data={tasksByStatusForChart}
                       dataKey="count"
                       nameKey="label"
                       cx="50%"
-                      cy="48%"
-                      innerRadius={64}
-                      outerRadius={100}
+                      cy="45%"
+                      innerRadius={54}
+                      outerRadius={84}
                       paddingAngle={3}
                       stroke="var(--surface)"
                       strokeWidth={2}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      labelLine={{ stroke: 'var(--text-secondary)', strokeWidth: 1 }}
+                      label={false}
                       isAnimationActive
                       animationDuration={800}
                       activeIndex={activeTaskStatusSlice}
@@ -311,6 +304,13 @@ const ManagerDashboard = () => {
                         <Cell key={`cell-${index}`} fill={TASK_STATUS_COLORS[entry._id] || COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
+                    <DonutCenterLabel
+                      data={tasksByStatusForChart}
+                      activeIndex={activeTaskStatusSlice}
+                      activeColor={TASK_STATUS_COLORS[tasksByStatusForChart[activeTaskStatusSlice ?? 0]?._id]}
+                      cx="50%"
+                      cy="45%"
+                    />
                     <Tooltip content={renderChartTooltip} />
                     <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 8 }} />
                   </PieChart>

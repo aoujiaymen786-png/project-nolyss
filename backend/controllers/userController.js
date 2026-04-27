@@ -4,7 +4,14 @@ const notificationService = require('../services/notificationService');
 
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find({}).select('-password -refreshToken -twoFactorSecret');
+    // N'inclut pas les comptes en attente/refusés (ils sont gérés via /pending/registrations)
+    const users = await User.find({
+      $or: [
+        { registrationStatus: { $exists: false } },
+        { registrationStatus: null },
+        { registrationStatus: 'approved' },
+      ],
+    }).select('-password -refreshToken -twoFactorSecret');
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -72,13 +79,8 @@ const rejectRegistration = async (req, res) => {
     if (user.registrationStatus !== 'pending') {
       return res.status(400).json({ message: 'Cette demande n\'est plus en attente.' });
     }
-    user.registrationStatus = 'rejected';
-    await user.save();
-    try {
-      await notificationService.notifyRegistrationDecision(user._id, false);
-    } catch (e) {
-      console.error('Notification inscription refusée:', e);
-    }
+    const snapshot = { email: user.email, role: user.role, name: user.name };
+    await user.deleteOne();
 
     const meta = getRequestMeta(req);
     await logAudit({
@@ -87,12 +89,11 @@ const rejectRegistration = async (req, res) => {
       entityId: user._id,
       performedBy: req.user._id,
       performedByEmail: req.user.email,
-      changes: { after: { registrationStatus: 'rejected' } },
+      changes: { deleted: snapshot },
       ...meta,
     });
 
-    const updated = await User.findById(user._id).select('-password -refreshToken -twoFactorSecret');
-    res.json(updated);
+    res.json({ message: 'Demande d\'inscription refusée et compte supprimé.' });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

@@ -6,19 +6,46 @@ import './AdminCommon.css';
 const AdminDashboardPage = () => {
   const [metrics, setMetrics] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const fetchMetrics = async () => {
+    let mounted = true;
+    const fetchMetrics = async (opts = { silent: false }) => {
+      const silent = !!opts?.silent;
       try {
+        if (!silent) setLoading(true);
+        else setRefreshing(true);
         const { data } = await API.get('/admin/metrics');
-        setMetrics(data);
+        if (mounted) setMetrics(data);
       } catch (err) {
         console.error(err);
       } finally {
-        setLoading(false);
+        if (mounted) {
+          setLoading(false);
+          setRefreshing(false);
+        }
       }
     };
+
     fetchMetrics();
+
+    // Rafraîchit à la reprise de focus (utile après suppression/édition d'utilisateurs dans un autre écran)
+    const onFocus = () => fetchMetrics({ silent: true });
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchMetrics({ silent: true });
+    };
+    window.addEventListener('focus', onFocus);
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Rafraîchissement léger périodique
+    const intervalId = setInterval(() => fetchMetrics({ silent: true }), 30000);
+
+    return () => {
+      mounted = false;
+      clearInterval(intervalId);
+      window.removeEventListener('focus', onFocus);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   if (loading) return <div className="admin-page"><div className="admin-loading">Chargement</div></div>;
@@ -55,6 +82,7 @@ const AdminDashboardPage = () => {
             <div className="admin-metric-value">{c.value ?? 0}</div>
             <div className="admin-metric-label">{c.label}</div>
             {c.sub && <div className="admin-metric-sub">{c.sub}</div>}
+            {i === 0 && refreshing && <div className="admin-metric-sub">Mise à jour…</div>}
           </Link>
         ))}
       </div>

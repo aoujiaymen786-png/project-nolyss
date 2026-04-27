@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
 const notificationService = require('../services/notificationService');
+const integrationService = require('../services/integrationService');
 
 const getTeamMemberProjectIds = async (userId) => {
   const [teamProjectIds, taskProjectIds] = await Promise.all([
@@ -23,6 +24,9 @@ const sanitizeProjectBody = (body) => {
   return sanitized;
 };
 
+const milestoneKey = (m) => `${String(m?.name || '').trim().toLowerCase()}::${m?.dueDate ? new Date(m.dueDate).toISOString() : ''}`;
+const sprintKey = (s) => `${String(s?.name || '').trim().toLowerCase()}::${s?.startDate ? new Date(s.startDate).toISOString() : ''}::${s?.endDate ? new Date(s.endDate).toISOString() : ''}`;
+
 const createProject = async (req, res) => {
   try {
     const sanitized = sanitizeProjectBody(req.body);
@@ -39,6 +43,19 @@ const createProject = async (req, res) => {
       await notificationService.notifyProjectCreated(createdProject, req.user._id);
     } catch (e) {
       console.error('Notification projet créé:', e);
+    }
+    try {
+      await integrationService.triggerIntegrations('project.created', {
+        projectId: createdProject._id,
+        projectName: createdProject.name,
+        clientId: createdProject.client || null,
+        managerId: createdProject.manager || null,
+      }, {
+        triggeredBy: req.user._id,
+        source: 'projectController.createProject',
+      });
+    } catch (e) {
+      console.error('Intégration webhook projet créé:', e);
     }
 
     // Créer une tâche par défaut pour que le Kanban ne soit pas vide
@@ -164,6 +181,16 @@ const updateProject = async (req, res) => {
       }
       const previousTeam = (project.team || []).map((t) => t.toString());
       const previousStatus = project.status;
+      const previousMilestones = (project.milestones || []).map((m) => ({
+        name: m.name,
+        dueDate: m.dueDate,
+        completed: Boolean(m.completed),
+      }));
+      const previousSprints = (project.sprints || []).map((s) => ({
+        name: s.name,
+        startDate: s.startDate,
+        endDate: s.endDate,
+      }));
       if (req.user.role === 'projectManager') {
         // Budget "limité" pour chef de projet : ajuste le budget prévisionnel, pas la structure financière réelle.
         const allowedFields = [
@@ -210,6 +237,60 @@ const updateProject = async (req, res) => {
           await notificationService.notifyProjectCompleted(projPop || updatedProject);
         } catch (e) {
           console.error('Notification projet terminé:', e);
+        }
+        try {
+          const clientId = updatedProject.client?._id ?? updatedProject.client;
+          if (clientId) {
+            const projPop = await Project.findById(updatedProject._id).populate('client', 'name').lean();
+            await notificationService.notifyClientProjectCompleted(projPop || updatedProject, clientId);
+          }
+        } catch (e) {
+          console.error('Notification client projet terminé:', e);
+        }
+      }
+      if (previousStatus !== updatedProject.status) {
+        try {
+          const projPop = await Project.findById(updatedProject._id).populate('team manager createdBy', 'name').lean();
+          await notificationService.notifyProjectStatusChanged(projPop || updatedProject, previousStatus, updatedProject.status, req.user._id);
+        } catch (e) {
+          console.error('Notification changement statut projet:', e);
+        }
+      }
+      if (Array.isArray(updatedProject.milestones) && updatedProject.milestones.length) {
+        const previousMilestonesMap = new Map(previousMilestones.map((m) => [milestoneKey(m), m]));
+        const newlyCompletedMilestones = updatedProject.milestones.filter((m) => {
+          if (!m?.completed) return false;
+          const before = previousMilestonesMap.get(milestoneKey(m));
+          return !before || !before.completed;
+        });
+        for (const milestone of newlyCompletedMilestones) {
+          try {
+            const projPop = await Project.findById(updatedProject._id).populate('team manager createdBy', 'name').lean();
+            await notificationService.notifyMilestoneCompleted(projPop || updatedProject, milestone, req.user._id);
+          } catch (e) {
+            console.error('Notification jalon terminé:', e);
+          }
+        }
+      }
+      if (Array.isArray(updatedProject.sprints) && updatedProject.sprints.length) {
+        const now = new Date();
+        const previousSprintsMap = new Map(previousSprints.map((s) => [sprintKey(s), s]));
+        const endedSprints = updatedProject.sprints.filter((s) => {
+          if (!s?.endDate) return false;
+          const endDate = new Date(s.endDate);
+          if (Number.isNaN(endDate.getTime()) || endDate > now) return false;
+          const before = previousSprintsMap.get(sprintKey(s));
+          if (!before || !before.endDate) return true;
+          const previousEnd = new Date(before.endDate);
+          return previousEnd > now;
+        });
+        for (const sprint of endedSprints) {
+          try {
+            const projPop = await Project.findById(updatedProject._id).populate('team manager createdBy', 'name').lean();
+            await notificationService.notifySprintCompleted(projPop || updatedProject, sprint, req.user._id);
+          } catch (e) {
+            console.error('Notification sprint terminé:', e);
+          }
         }
       }
       res.json(updatedProject);
@@ -319,6 +400,15 @@ const addProjectComment = async (req, res) => {
     project.comments = project.comments || [];
     project.comments.push(comment);
     await project.save();
+    try {
+      const projPop = await Project.findById(project._id)
+        .populate('team manager createdBy', 'name')
+        .lean();
+      const lastComment = project.comments[project.comments.length - 1];
+      await notificationService.notifyProjectCommentAdded(projPop || project, lastComment, req.user._id);
+    } catch (e) {
+      console.error('Notification commentaire projet:', e);
+    }
     const populated = await Project.findById(project._id)
       .populate('comments.user', 'name')
       .select('comments')

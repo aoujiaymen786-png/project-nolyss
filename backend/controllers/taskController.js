@@ -183,6 +183,9 @@ const updateTask = async (req, res) => {
     const newAssignedTo = (updatedTask.assignedTo || []).map((id) => (id && (id._id || id).toString())).filter(Boolean);
     const projForNotif = await Project.findById(projectId).populate('manager', 'name').lean();
     try {
+      if (previousStatus !== updatedTask.status) {
+        await notificationService.notifyTaskStatusChanged(updatedTask, { name: projForNotif?.name, manager: projForNotif?.manager, _id: projectId }, previousStatus, updatedTask.status, req.user._id);
+      }
       if (newAssignedTo.length && (previousAssignedTo.length !== newAssignedTo.length || previousAssignedTo.some((id) => !newAssignedTo.includes(id)) || newAssignedTo.some((id) => !previousAssignedTo.includes(id)))) {
         await notificationService.notifyTaskAssigned(updatedTask, { name: projForNotif?.name }, newAssignedTo, req.user._id);
       }

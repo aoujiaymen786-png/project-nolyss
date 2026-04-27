@@ -1,6 +1,7 @@
 const Client = require('../models/Client');
 const Invoice = require('../models/Invoice');
 const User = require('../models/User');
+const notificationService = require('../services/notificationService');
 
 const createClient = async (req, res) => {
   try {
@@ -30,6 +31,11 @@ const createClient = async (req, res) => {
     }
 
     const populated = await Client.findById(createdClient._id).populate('createdBy', 'name email');
+    try {
+      await notificationService.notifyClientCreated(populated || createdClient, req.user._id);
+    } catch (e) {
+      console.error('Notification client créé:', e);
+    }
     res.status(201).json(populated);
   } catch (error) {
     res.status(400).json({ message: error.message });

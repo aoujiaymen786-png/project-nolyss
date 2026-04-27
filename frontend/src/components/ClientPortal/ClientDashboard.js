@@ -11,24 +11,24 @@ const PROJECT_STATUS_LABELS = {
   prospecting: 'Prospection',
   inProgress: 'En cours',
   validation: 'Validation',
-  completed: 'Termine',
-  archived: 'Archive',
+  completed: 'Terminé',
+  archived: 'Archivé',
 };
 
 const INVOICE_STATUS_LABELS = {
   draft: 'Brouillon',
-  sent: 'Envoyee',
+  sent: 'Envoyée',
   partial: 'Partielle',
-  paid: 'Payee',
+  paid: 'Payée',
   overdue: 'En retard',
-  cancelled: 'Annulee',
+  cancelled: 'Annulée',
 };
 
 const QUOTE_STATUS_LABELS = {
   draft: 'Brouillon',
-  sent: 'Envoye',
-  accepted: 'Accepte',
-  refused: 'Refuse',
+  sent: 'Envoyé',
+  accepted: 'Accepté',
+  refused: 'Refusé',
   converted: 'Converti',
 };
 
@@ -158,8 +158,8 @@ const ClientDashboard = () => {
         <div className="kpi-card"><KpiIcon name="folder" /><div className="kpi-content"><h3>Projets actifs</h3><p className="kpi-value">{projects.filter((p) => ['prospecting', 'quotation', 'inProgress', 'validation'].includes(p.status)).length}</p></div></div>
         <div className="kpi-card"><KpiIcon name="package" /><div className="kpi-content"><h3>Livrables</h3><p className="kpi-value">{deliverables.length}</p></div></div>
         <div className="kpi-card"><KpiIcon name="file" /><div className="kpi-content"><h3>Factures en attente</h3><p className="kpi-value">{pendingInvoices.length}</p></div></div>
-        <div className="kpi-card"><KpiIcon name="receipt" /><div className="kpi-content"><h3>Devis a valider</h3><p className="kpi-value">{quotes.filter((q) => q.status === 'sent').length}</p></div></div>
-        <div className="kpi-card"><KpiIcon name="warning" /><div className="kpi-content"><h3>Reclamations</h3><p className="kpi-value">{claims.filter((c) => c.status !== 'resolved').length}</p></div></div>
+        <div className="kpi-card"><KpiIcon name="receipt" /><div className="kpi-content"><h3>Devis à valider</h3><p className="kpi-value">{quotes.filter((q) => q.status === 'sent').length}</p></div></div>
+        <div className="kpi-card"><KpiIcon name="warning" /><div className="kpi-content"><h3>Réclamations</h3><p className="kpi-value">{claims.filter((c) => c.status !== 'resolved').length}</p></div></div>
       </div>
 
       <div className="table-section">
@@ -168,7 +168,7 @@ const ClientDashboard = () => {
           <div className="table-container">
             <table className="admin-table">
               <thead>
-                <tr><th>Projet</th><th>Statut</th><th>Progression</th><th>Manager</th><th>Echeance</th></tr>
+                <tr><th>Projet</th><th>Statut</th><th>Progression</th><th>Manager</th><th>Échéance</th></tr>
               </thead>
               <tbody>
                 {projects.map((p) => (
@@ -192,18 +192,18 @@ const ClientDashboard = () => {
       </div>
 
       <div className="table-section">
-        <h3>Livrables recents</h3>
+        <h3>Livrables récents</h3>
         {deliverables.length > 0 ? (
           <ul className="deliverables-list">
             {deliverables.slice(0, 12).map((d, idx) => (
               <li className="deliverable-item" key={`${d.projectId || 'p'}-${idx}`}>
                 <span className="deliverable-name">{d.name || 'Fichier'}</span>
                 <span className="deliverable-project">{d.projectName || 'Projet'}</span>
-                {d.url ? <a className="link-download" href={d.url} target="_blank" rel="noopener noreferrer">Telecharger</a> : null}
+                {d.url ? <a className="link-download" href={d.url} target="_blank" rel="noopener noreferrer">Télécharger</a> : null}
               </li>
             ))}
           </ul>
-        ) : <p>Aucun livrable recent.</p>}
+        ) : <p>Aucun livrable récent.</p>}
       </div>
 
       <div className="table-section">
@@ -360,7 +360,7 @@ const ClientDashboard = () => {
               </tbody>
             </table>
           </div>
-        ) : <p>Aucune reclamation.</p>}
+        ) : <p>Aucune réclamation.</p>}
       </div>
 
       <div className="table-section">

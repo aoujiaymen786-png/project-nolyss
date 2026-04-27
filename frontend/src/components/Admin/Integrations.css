@@ -101,6 +101,14 @@
   flex-shrink: 0;
 }
 
+.integration-status-stack {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .status-badge {
   font-size: 0.7rem;
   font-weight: 600;
@@ -117,6 +125,16 @@
   color: #15803d;
 }
 
+.status-badge.status-test-ok {
+  background: rgba(16, 185, 129, 0.18);
+  color: #047857;
+}
+
+.status-badge.status-test-ko {
+  background: rgba(239, 68, 68, 0.16);
+  color: #b91c1c;
+}
+
 .integrations-webhooks-desc {
   color: var(--text-secondary);
   font-size: 0.9rem;
@@ -129,4 +147,8 @@
 
 .admin-modal-wide {
   max-width: 520px;
+}
+
+.integration-test-btn {
+  margin-right: 0;
 }

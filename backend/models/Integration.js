@@ -3,9 +3,12 @@ const mongoose = require('mongoose');
 const integrationSchema = mongoose.Schema(
   {
     name: { type: String, required: true },
-    type: { type: String, required: true }, // api, webhook, oauth, provider
-    provider: { type: String }, // smtp, gmail, outlook, googledrive, dropbox, s3, googlecalendar, outlookcalendar, slack, teams, stripe, paypal
-    category: { type: String }, // email, storage, calendar, communication, payment
+    type: { type: String, required: true, enum: ['webhook', 'provider'] },
+    provider: {
+      type: String,
+      enum: ['smtp', 'gmail', 'outlook', 'googledrive', 'dropbox', 's3', 'googlecalendar', 'outlookcalendar', 'slack', 'teams', 'stripe', 'paypal'],
+    },
+    category: { type: String, enum: ['email', 'storage', 'calendar', 'communication', 'payment', 'webhook'] },
     isActive: { type: Boolean, default: true },
     config: {
       endpoint: { type: String },
@@ -33,6 +36,14 @@ const integrationSchema = mongoose.Schema(
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true }
+);
+
+integrationSchema.index(
+  { provider: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { type: 'provider', provider: { $exists: true, $type: 'string' } },
+  }
 );
 
 const Integration = mongoose.model('Integration', integrationSchema);

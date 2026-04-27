@@ -16,6 +16,28 @@ const TRIGGERS = [
   { value: 'on_status_change', label: 'Changement de statut' },
   { value: 'on_approval', label: 'À l\'approbation' },
 ];
+const WORKFLOW_EVENT_MAP = {
+  project: {
+    on_create: ['project.created'],
+    on_status_change: [],
+    on_approval: [],
+  },
+  quote: {
+    on_create: [],
+    on_status_change: [],
+    on_approval: [],
+  },
+  invoice: {
+    on_create: [],
+    on_status_change: ['invoice.sent'],
+    on_approval: ['invoice.payment_recorded'],
+  },
+  task: {
+    on_create: [],
+    on_status_change: [],
+    on_approval: [],
+  },
+};
 
 const Workflows = () => {
   const [list, setList] = useState([]);
@@ -97,6 +119,11 @@ const Workflows = () => {
     }
   };
 
+  const getMappedEvents = (entityType, trigger) => {
+    const byEntity = WORKFLOW_EVENT_MAP[entityType] || {};
+    return byEntity[trigger] || [];
+  };
+
   return (
     <div className="admin-page">
       <div className="admin-page-header">
@@ -119,6 +146,7 @@ const Workflows = () => {
                 <th>Nom</th>
                 <th>Entité</th>
                 <th>Déclencheur</th>
+                <th>Événement webhook</th>
                 <th>Actif</th>
                 <th>Étapes</th>
                 <th>Actions</th>
@@ -130,6 +158,7 @@ const Workflows = () => {
                   <td>{item.name}</td>
                   <td>{ENTITY_TYPES.find((e) => e.value === item.entityType)?.label || item.entityType}</td>
                   <td>{TRIGGERS.find((t) => t.value === item.trigger)?.label || item.trigger}</td>
+                  <td>{getMappedEvents(item.entityType, item.trigger).join(', ') || '—'}</td>
                   <td>{item.isActive !== false ? 'Oui' : 'Non'}</td>
                   <td>{(item.steps || []).length}</td>
                   <td>
@@ -195,6 +224,9 @@ const Workflows = () => {
                     <option key={t.value} value={t.value}>{t.label}</option>
                   ))}
                 </select>
+                <small className="workflow-hint">
+                  Événement(s) webhook associé(s) : {getMappedEvents(form.entityType, form.trigger).join(', ') || 'aucun (non implémenté pour le moment)'}
+                </small>
               </div>
               <div className="admin-form-group">
                 <label className="admin-checkbox-label">

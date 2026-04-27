@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import API from '../../utils/api';
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Customized } from 'recharts';
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
+import DonutCenterLabel from './DonutCenterLabel';
+import { INVOICE_STATUS_COLORS, INVOICE_STATUS_ORDER, sortByKeyOrder } from './chartTheme';
 import './Dashboard.css';
 
 const EXECUTIVE_WIDGET_LAYOUT = [
@@ -123,6 +125,12 @@ const ExecutiveDashboard = () => {
       </div>
     );
   };
+  const financialByStatusSorted = sortByKeyOrder((financialSummary?.byStatus || []).map((s) => ({
+    _id: s._id,
+    name: INVOICE_STATUS_LABELS[s._id] || s._id,
+    value: s.total || 0,
+  })), '_id', INVOICE_STATUS_ORDER);
+
 
   const escapeCsv = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
   const downloadCsv = (filename, headers, rows) => {
@@ -271,27 +279,8 @@ const ExecutiveDashboard = () => {
                 <div className="chart-card-donut-wrap">
                   <ResponsiveContainer width="100%" height={220}>
                     <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
-                      <Customized
-                        component={(props) => {
-                          const { width, height } = props;
-                          if (!width || !height) return null;
-                          const totalCA = (financialSummary?.byStatus || []).reduce((acc, s) => acc + (s.total || 0), 0);
-                          const cx = width / 2;
-                          const cy = height / 2 - 12;
-                          return (
-                            <g>
-                              <text x={cx} y={cy - 8} textAnchor="middle" fill="var(--text-secondary)" fontSize={11} fontWeight={500}>Total CA</text>
-                              <text x={cx} y={cy + 14} textAnchor="middle" fill="var(--text-primary)" fontSize={15} fontWeight={700}>{formatCurrency(totalCA)}</text>
-                            </g>
-                          );
-                        }}
-                      />
                       <Pie
-                        data={financialSummary.byStatus.map((s) => ({
-                          _id: s._id,
-                          name: INVOICE_STATUS_LABELS[s._id] || s._id,
-                          value: s.total || 0,
-                        }))}
+                        data={financialByStatusSorted}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
@@ -307,10 +296,17 @@ const ExecutiveDashboard = () => {
                         activeIndex={activeFinancialSlice}
                         onMouseEnter={(_, index) => setActiveFinancialSlice(index)}
                       >
-                        {financialSummary.byStatus.map((s, i) => (
-                          <Cell key={i} fill={INVOICE_STATUS_CHART_COLORS[s._id] || COLORS[i % COLORS.length]} />
+                        {financialByStatusSorted.map((s, i) => (
+                          <Cell key={s._id || i} fill={INVOICE_STATUS_COLORS[s._id] || COLORS[i % COLORS.length]} />
                         ))}
                       </Pie>
+                      <DonutCenterLabel
+                        data={financialByStatusSorted}
+                        activeIndex={activeFinancialSlice}
+                        activeColor={INVOICE_STATUS_COLORS[financialByStatusSorted[activeFinancialSlice ?? 0]?._id]}
+                        cx="50%"
+                        cy="45%"
+                      />
                       <Tooltip content={renderChartTooltip} />
                       <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 10 }} />
                     </PieChart>

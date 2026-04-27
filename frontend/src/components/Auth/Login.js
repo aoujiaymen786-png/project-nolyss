@@ -7,17 +7,19 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage('');
     try {
       await login(email, password);
       navigate('/dashboard');
     } catch (error) {
       const msg = error.response?.data?.message || 'Erreur de connexion';
-      alert(msg);
+      setErrorMessage(msg);
     }
   };
 
@@ -30,13 +32,25 @@ const Login = () => {
         </div>
 
         <form className="auth-form" onSubmit={handleSubmit}>
-          <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          <input
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (errorMessage) setErrorMessage('');
+            }}
+            required
+          />
           <div className="password-field">
             <input
               type={showPassword ? 'text' : 'password'}
               placeholder="Mot de passe"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (errorMessage) setErrorMessage('');
+              }}
               required
             />
             <button
@@ -52,6 +66,7 @@ const Login = () => {
           <div className="auth-actions">
             <button type="submit" className="btn">Se connecter</button>
           </div>
+          {errorMessage ? <div className="error-message">{errorMessage}</div> : null}
 
           <div className="auth-footer">
             <span className="auth-aux">Mot de passe oublié ? </span>

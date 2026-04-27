@@ -70,10 +70,20 @@ export const AuthProvider = ({ children }) => {
   }, [refreshAccessToken]);
 
   const login = async (email, password) => {
-    const { data } = await API.post('/auth/login', { email, password });
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    await reloadUser();
+    try {
+      const { data } = await API.post('/auth/login', {
+        email: String(email || '').trim().toLowerCase(),
+        password,
+      });
+      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('refreshToken', data.refreshToken);
+      await reloadUser();
+    } catch (error) {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      setUser(null);
+      throw error;
+    }
   };
 
   const logout = async () => {

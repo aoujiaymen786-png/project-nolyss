@@ -6,6 +6,7 @@ const Payment = require('../models/Payment');
 const Claim = require('../models/Claim');
 const User = require('../models/User');
 const notificationService = require('../services/notificationService');
+const integrationService = require('../services/integrationService');
 
 const getClientProjects = async (req, res) => {
   try {
@@ -205,6 +206,23 @@ const createClientPayment = async (req, res) => {
     } catch (e) {
       console.error('Notification client paiement enregistré:', e);
     }
+    try {
+      await integrationService.triggerIntegrations('invoice.payment_recorded', {
+        invoiceId: invoice._id,
+        invoiceNumber: invoice.number,
+        amount: numericAmount,
+        paidAmount: invoice.paidAmount || 0,
+        totalTTC: invoice.totalTTC || 0,
+        status: invoice.status,
+        method,
+        fromPortal: true,
+      }, {
+        triggeredBy: req.user._id,
+        source: 'clientPortalController.createClientPayment',
+      });
+    } catch (e) {
+      console.error('Intégration webhook paiement client:', e);
+    }
 
     res.status(201).json({
       message: 'Paiement enregistré avec succès.',
@@ -280,6 +298,21 @@ const createClientClaim = async (req, res) => {
       await notificationService.notifyClaimCreated(populated, populated.client?.name);
     } catch (e) {
       console.error('Notification réclamation:', e);
+    }
+    try {
+      await integrationService.triggerIntegrations('claim.created', {
+        claimId: populated._id,
+        claimType: populated.type,
+        subject: populated.subject,
+        status: populated.status,
+        clientId: populated.client?._id || req.client._id,
+        assignedTo: populated.assignedTo?._id || assignedTo,
+      }, {
+        triggeredBy: req.user._id,
+        source: 'clientPortalController.createClientClaim',
+      });
+    } catch (e) {
+      console.error('Intégration webhook réclamation:', e);
     }
     res.status(201).json(populated);
   } catch (error) {

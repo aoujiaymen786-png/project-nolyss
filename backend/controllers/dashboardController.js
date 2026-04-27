@@ -425,10 +425,22 @@ const getCoordinatorDashboard = async (req, res) => {
 // Admin Dashboard Stats
 const getAdminStats = async (req, res) => {
   try {
-    const totalUsers = await User.countDocuments();
+    const approvedUsersFilter = {
+      $or: [
+        { registrationStatus: { $exists: false } },
+        { registrationStatus: null },
+        { registrationStatus: 'approved' },
+      ],
+    };
+
+    const [totalUsers, activeUsers] = await Promise.all([
+      User.countDocuments(approvedUsersFilter),
+      User.countDocuments({ ...approvedUsersFilter, isActive: true }),
+    ]);
     const totalProjects = await Project.countDocuments();
-    const completedTasks = await Task.countDocuments({ status: 'completed' });
-    const inProgressTasks = await Task.countDocuments({ status: 'in-progress' });
+    // Statuts de tâches utilisés dans l'app : todo | inProgress | review | done
+    const completedTasks = await Task.countDocuments({ status: 'done' });
+    const inProgressTasks = await Task.countDocuments({ status: 'inProgress' });
 
     const projectsByStatus = await Project.aggregate([
       { $group: { _id: '$status', count: { $sum: 1 } } }
@@ -449,11 +461,12 @@ const getAdminStats = async (req, res) => {
       { $project: { manager: '$managerInfo.name', count: 1, _id: 0 } }
     ]);
 
-    const recentUsers = await User.find().sort({ createdAt: -1 }).limit(10).select('-password -refreshToken').lean();
+    const recentUsers = await User.find(approvedUsersFilter).sort({ createdAt: -1 }).limit(10).select('-password -refreshToken').lean();
     const activeProjects = await Project.find({ status: { $ne: 'completed' } }).populate('client', 'name').populate('manager', 'name').lean();
 
     res.json({
       totalUsers,
+      activeUsers,
       totalProjects,
       completedTasks,
       inProgressTasks,

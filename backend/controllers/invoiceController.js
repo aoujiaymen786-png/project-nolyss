@@ -5,6 +5,7 @@ const Client = require('../models/Client');
 const SystemSettings = require('../models/SystemSettings');
 const nodemailer = require('nodemailer');
 const notificationService = require('../services/notificationService');
+const integrationService = require('../services/integrationService');
 
 const generateInvoiceNumber = async (customPrefix) => {
   const prefix = customPrefix || 'FAC';
@@ -73,6 +74,33 @@ const createInvoice = async (req, res) => {
 
     const invoice = new Invoice(invoiceData);
     const createdInvoice = await invoice.save();
+    if (createdInvoice.status === 'sent') {
+      try {
+        const inv = await Invoice.findById(createdInvoice._id).populate('client', 'name').lean();
+        await notificationService.notifyInvoiceSent(inv || createdInvoice, inv?.client?.name);
+        await notificationService.notifyInvoicePending(createdInvoice, req.user._id);
+        const clientId = createdInvoice.client?._id ?? createdInvoice.client;
+        if (clientId) {
+          await notificationService.notifyClientInvoiceAvailable(createdInvoice, clientId);
+        }
+      } catch (e) {
+        console.error('Notifications facture envoyée (create):', e);
+      }
+      try {
+        await integrationService.triggerIntegrations('invoice.sent', {
+          invoiceId: createdInvoice._id,
+          invoiceNumber: createdInvoice.number,
+          clientId: createdInvoice.client || null,
+          totalTTC: createdInvoice.totalTTC || 0,
+          status: createdInvoice.status,
+        }, {
+          triggeredBy: req.user._id,
+          source: 'invoiceController.createInvoice',
+        });
+      } catch (e) {
+        console.error('Intégration webhook facture envoyée (create):', e);
+      }
+    }
     if (quoteId) {
       const quote = await Quote.findById(quoteId);
       if (quote) {
@@ -125,8 +153,19 @@ const updateInvoice = async (req, res) => {
     }
     const sanitized = sanitizeInvoiceBody(req.body);
     const wasDraft = invoice.status === 'draft';
+    const previousStatus = invoice.status;
     Object.assign(invoice, sanitized);
     const updatedInvoice = await invoice.save();
+    if (previousStatus !== updatedInvoice.status) {
+      try {
+        await notificationService.notifyInvoiceStatusChanged(updatedInvoice, previousStatus, updatedInvoice.status, req.user._id);
+        if (updatedInvoice.status === 'sent') {
+          await notificationService.notifyInvoicePending(updatedInvoice, req.user._id);
+        }
+      } catch (e) {
+        console.error('Notification changement statut facture:', e);
+      }
+    }
     if (wasDraft && updatedInvoice.status === 'sent') {
       try {
         const inv = await Invoice.findById(updatedInvoice._id).populate('client', 'name').lean();
@@ -137,6 +176,20 @@ const updateInvoice = async (req, res) => {
         }
       } catch (e) {
         console.error('Notifications facture envoyée:', e);
+      }
+      try {
+        await integrationService.triggerIntegrations('invoice.sent', {
+          invoiceId: updatedInvoice._id,
+          invoiceNumber: updatedInvoice.number,
+          clientId: updatedInvoice.client || null,
+          totalTTC: updatedInvoice.totalTTC || 0,
+          status: updatedInvoice.status,
+        }, {
+          triggeredBy: req.user._id,
+          source: 'invoiceController.updateInvoice',
+        });
+      } catch (e) {
+        console.error('Intégration webhook facture envoyée:', e);
       }
     }
     res.json(updatedInvoice);
@@ -167,6 +220,7 @@ const validateInvoice = async (req, res) => {
       return res.status(400).json({ message: 'Seules les factures envoyées ou partiellement payées peuvent être validées' });
     }
     const { status: newStatus, paidAmount } = req.body;
+    const previousStatus = invoice.status;
     if (newStatus === 'paid') {
       invoice.status = 'paid';
       invoice.paidAmount = invoice.totalTTC || 0;
@@ -179,6 +233,17 @@ const validateInvoice = async (req, res) => {
       return res.status(400).json({ message: 'Indiquez status: "paid" ou paidAmount' });
     }
     await invoice.save();
+    try {
+      if (previousStatus !== invoice.status) {
+        await notificationService.notifyInvoiceStatusChanged(invoice, previousStatus, invoice.status, req.user._id);
+      }
+      await notificationService.notifyInvoiceValidated(invoice, req.user._id);
+      if (paidAmount != null && Number(paidAmount) > 0) {
+        await notificationService.notifyPaymentMade(invoice, Number(paidAmount), req.user._id);
+      }
+    } catch (e) {
+      console.error('Notification validation facture:', e);
+    }
     res.json(invoice);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -199,8 +264,37 @@ const recordPayment = async (req, res) => {
       reference: reference || '',
     });
     invoice.paidAmount = invoice.payments.reduce((s, p) => s + p.amount, 0);
+    const previousStatus = invoice.status;
     invoice.status = invoice.paidAmount >= (invoice.totalTTC || 0) ? 'paid' : 'partial';
     await invoice.save();
+    try {
+      if (previousStatus !== invoice.status) {
+        await notificationService.notifyInvoiceStatusChanged(invoice, previousStatus, invoice.status, req.user._id);
+      }
+      await notificationService.notifyPaymentMade(invoice, Number(amount), req.user._id);
+      const clientId = invoice.client?._id ?? invoice.client;
+      if (clientId) {
+        await notificationService.notifyClientPaymentRecorded(invoice, clientId, Number(amount));
+      }
+    } catch (e) {
+      console.error('Notification paiement facture:', e);
+    }
+    try {
+      await integrationService.triggerIntegrations('invoice.payment_recorded', {
+        invoiceId: invoice._id,
+        invoiceNumber: invoice.number,
+        amount: Number(amount),
+        paidAmount: invoice.paidAmount || 0,
+        totalTTC: invoice.totalTTC || 0,
+        status: invoice.status,
+        method,
+      }, {
+        triggeredBy: req.user._id,
+        source: 'invoiceController.recordPayment',
+      });
+    } catch (e) {
+      console.error('Intégration webhook paiement facture:', e);
+    }
     res.json(invoice);
   } catch (error) {
     res.status(400).json({ message: error.message });

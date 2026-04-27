@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import API from '../../utils/api';
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import DashboardWidgetGrid from './DashboardWidgetGrid';
 import KpiIcon from '../UI/KpiIcon';
+import DonutCenterLabel from './DonutCenterLabel';
+import { INVOICE_STATUS_COLORS, INVOICE_STATUS_ORDER, PROJECT_STATUS_COLORS, PROJECT_STATUS_ORDER, sortByKeyOrder } from './chartTheme';
 import './Dashboard.css';
 
 const CLIENT_WIDGET_LAYOUT = [
@@ -18,6 +20,7 @@ const ClientDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeProjectSlice, setActiveProjectSlice] = useState(null);
+  const [activeInvoiceSlice, setActiveInvoiceSlice] = useState(null);
 
   useEffect(() => {
     const fetchClientStats = async () => {
@@ -46,17 +49,32 @@ const ClientDashboard = () => {
     archived: 'Archivé',
   };
 
-  const PROJECT_STATUS_CHART_COLORS = {
-    prospecting: '#94a3b8',
-    inProgress: '#0ea5e9',
-    validation: '#8b5cf6',
-    completed: '#22c55e',
-    archived: '#64748b',
+  const INVOICE_STATUS_LABELS = {
+    draft: 'Brouillon',
+    sent: 'Envoyée',
+    partial: 'Partielle',
+    paid: 'Payée',
+    overdue: 'En retard',
+    cancelled: 'Annulée',
   };
 
-  const projectsByStatusForChart = (stats.projectsByStatus || []).map((s) => ({
+  const QUOTE_STATUS_LABELS = {
+    draft: 'Brouillon',
+    sent: 'Envoyé',
+    accepted: 'Accepté',
+    refused: 'Refusé',
+    converted: 'Converti',
+  };
+
+  const projectsByStatusForChart = sortByKeyOrder(stats.projectsByStatus || [], '_id', PROJECT_STATUS_ORDER).map((s) => ({
     ...s,
     label: PROJECT_STATUS_LABELS[s._id] || s._id,
+  }));
+
+  const invoicesByStatusForChart = sortByKeyOrder(stats.invoicesByStatus || [], '_id', INVOICE_STATUS_ORDER).map((status) => ({
+    ...status,
+    label: INVOICE_STATUS_LABELS[status._id] || status._id,
+    value: status.count || 0,
   }));
 
   const renderChartTooltip = ({ active, payload, label }) => {
@@ -124,34 +142,40 @@ const ClientDashboard = () => {
         </div>
         <div key="chart-1" className="dashboard-widget-wrapper">
           <div className="dashboard-widget-drag-handle" aria-hidden="true">⋮⋮</div>
-          <div className="chart-card">
+          <div className="chart-card chart-card-donut chart-card--compact">
             <h3>Statut de mes projets</h3>
             {projectsByStatusForChart.length > 0 ? (
               <div className="chart-card-inner">
-                <ResponsiveContainer width="100%" height={340}>
+                <ResponsiveContainer width="100%" height={250}>
                   <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
                     <Pie
                       data={projectsByStatusForChart}
                       dataKey="count"
                       nameKey="label"
                       cx="50%"
-                      cy="48%"
-                      innerRadius={64}
-                      outerRadius={100}
+                      cy="45%"
+                      innerRadius={54}
+                      outerRadius={84}
                       paddingAngle={3}
                       stroke="var(--surface)"
                       strokeWidth={2}
-                      label={({ label, percent }) => `${label} ${(percent * 100).toFixed(0)} %`}
-                      labelLine={{ stroke: 'var(--text-secondary)', strokeWidth: 1 }}
+                      label={false}
                       isAnimationActive
                       animationDuration={800}
                       activeIndex={activeProjectSlice}
                       onMouseEnter={(_, index) => setActiveProjectSlice(index)}
                     >
                       {projectsByStatusForChart.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={PROJECT_STATUS_CHART_COLORS[entry._id] || COLORS[index % COLORS.length]} />
+                        <Cell key={`cell-${entry._id || index}`} fill={PROJECT_STATUS_COLORS[entry._id] || COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
+                    <DonutCenterLabel
+                      data={projectsByStatusForChart}
+                      activeIndex={activeProjectSlice}
+                      activeColor={PROJECT_STATUS_COLORS[projectsByStatusForChart[activeProjectSlice ?? 0]?._id]}
+                      cx="50%"
+                      cy="45%"
+                    />
                     <Tooltip content={renderChartTooltip} />
                     <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 8 }} />
                   </PieChart>
@@ -166,20 +190,39 @@ const ClientDashboard = () => {
             <h3>Statut des factures</h3>
             {stats.invoicesByStatus && stats.invoicesByStatus.length > 0 ? (
               <div className="chart-card-inner">
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={stats.invoicesByStatus} barCategoryGap={20} barGap={8} margin={{ top: 12, right: 20, bottom: 28, left: 12 }}>
-                    <defs>
-                      <linearGradient id="clientBarInvoices" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="var(--primary)" />
-                        <stop offset="100%" stopColor="var(--primary-hover, #c23d14)" />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="4 4" vertical={false} />
-                    <XAxis dataKey="_id" tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} height={40} />
-                    <YAxis width={32} allowDecimals={false} tick={{ fontSize: 11, fill: 'var(--text-secondary)' }} />
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+                    <Pie
+                      data={invoicesByStatusForChart}
+                      dataKey="value"
+                      nameKey="label"
+                      cx="50%"
+                      cy="45%"
+                      innerRadius={54}
+                      outerRadius={84}
+                      paddingAngle={3}
+                      stroke="var(--surface)"
+                      strokeWidth={2}
+                      label={false}
+                      isAnimationActive
+                      animationDuration={800}
+                      activeIndex={activeInvoiceSlice}
+                      onMouseEnter={(_, index) => setActiveInvoiceSlice(index)}
+                    >
+                      {invoicesByStatusForChart.map((entry, index) => (
+                        <Cell key={`invoice-cell-${entry._id || index}`} fill={INVOICE_STATUS_COLORS[entry._id] || COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <DonutCenterLabel
+                      data={invoicesByStatusForChart}
+                      activeIndex={activeInvoiceSlice}
+                      activeColor={INVOICE_STATUS_COLORS[invoicesByStatusForChart[activeInvoiceSlice ?? 0]?._id]}
+                      cx="50%"
+                      cy="45%"
+                    />
                     <Tooltip content={renderChartTooltip} />
-                    <Bar dataKey="count" name="Nombre" fill="url(#clientBarInvoices)" radius={[8, 8, 0, 0]} maxBarSize={56} animationDuration={800} />
-                  </BarChart>
+                    <Legend layout="horizontal" align="center" verticalAlign="bottom" wrapperStyle={{ paddingTop: 8 }} />
+                  </PieChart>
                 </ResponsiveContainer>
               </div>
             ) : <p className="chart-empty">Aucune facture</p>}
@@ -246,7 +289,7 @@ const ClientDashboard = () => {
                     <td><strong>{invoice.number}</strong></td>
                     <td>{invoice.project?.name || 'N/A'}</td>
                     <td>{(invoice.totalTTC ?? 0).toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
-                    <td><span className={`status-${(invoice.status || '').toLowerCase()}`}>{invoice.status}</span></td>
+                    <td><span className={`status-${(invoice.status || '').toLowerCase()}`}>{INVOICE_STATUS_LABELS[invoice.status] || invoice.status}</span></td>
                     <td>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('fr-FR') : '—'}</td>
                   </tr>
                 ))}
@@ -308,7 +351,7 @@ const ClientDashboard = () => {
                     <td><strong>{invoice.number}</strong></td>
                     <td>{invoice.project?.name || 'N/A'}</td>
                     <td>{(invoice.totalTTC ?? 0).toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
-                    <td><span className={`status-${(invoice.status || '').toLowerCase()}`}>{invoice.status}</span></td>
+                    <td><span className={`status-${(invoice.status || '').toLowerCase()}`}>{INVOICE_STATUS_LABELS[invoice.status] || invoice.status}</span></td>
                     <td>{invoice.date ? new Date(invoice.date).toLocaleDateString('fr-FR') : '—'}</td>
                     <td>{invoice.dueDate ? new Date(invoice.dueDate).toLocaleDateString('fr-FR') : '—'}</td>
                   </tr>
@@ -340,7 +383,7 @@ const ClientDashboard = () => {
                     <td><strong>{quote.number}</strong></td>
                     <td>{quote.project?.name || '—'}</td>
                     <td>{(quote.totalTTC ?? 0).toLocaleString('fr-FR', { style: 'currency', currency: 'TND' })}</td>
-                    <td><span className={`status-${(quote.status || '').toLowerCase()}`}>{quote.status}</span></td>
+                    <td><span className={`status-${(quote.status || '').toLowerCase()}`}>{QUOTE_STATUS_LABELS[quote.status] || quote.status}</span></td>
                     <td>{quote.date ? new Date(quote.date).toLocaleDateString('fr-FR') : (quote.createdAt ? new Date(quote.createdAt).toLocaleDateString('fr-FR') : '—')}</td>
                   </tr>
                 ))}
